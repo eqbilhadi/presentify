@@ -98,14 +98,14 @@ Fokus: Menyiapkan Central DB, mekanisme multi-koneksi database, autentikasi terp
 ### Milestone 2: Dynamic Roles, 2-Tier Permission & Sidebar Menu (PRD F1.1 Lanjutan)
 Fokus: Arsitektur otorisasi modular di level database tenant.
 
-- [ ] **Langkah 2.1: Migrasi & Model Tenant RBAC (`org_members` & `rbac_*`)**
-  * Migrasi Tenant DB: `org_members`, `rbac_menus`, `rbac_roles`, `rbac_permissions`, `rbac_role_has_permissions`.
+- [x] **Langkah 2.1: Migrasi & Model Tenant RBAC (`org_members` & `rbac_*`)** ✅ 2026-11-25
+  * Migrasi Tenant DB: `org_members`, `rbac_menus`, `rbac_roles`, `rbac_permissions`, `rbac_role_has_permissions`, `rbac_model_has_roles`.
   * Model Eloquent di `app/Models/`:
-    - `Member` (`protected $table = 'org_members';`)
-    - `Menu` (`protected $table = 'rbac_menus';`)
-    - `Role` (`protected $table = 'rbac_roles';`)
-    - `Permission` (`protected $table = 'rbac_permissions';`)
-  * Seeder 5 role bawaan: Superadmin SaaS, Admin Tenant, Atasan/Verifikator, Pegawai/Anggota, Akun Kiosk beserta matriks izin default di `rbac_role_has_permissions`.
+    - `Member` (`protected $table = 'org_members';`) [x]
+    - `Menu` (`protected $table = 'rbac_menus';`) [x]
+    - `Role` (`protected $table = 'rbac_roles';`) [x]
+    - `Permission` (`protected $table = 'rbac_permissions';`) [x]
+  * Seeder 5 role bawaan: Superadmin SaaS, Admin Tenant, Atasan/Verifikator, Pegawai/Anggota, Akun Kiosk beserta matriks izin default di `rbac_role_has_permissions`. [x]
 
 - [ ] **Langkah 2.2: Master Registry Menu & Non-Destructive Sync**
   * File konfigurasi master menu sistem `config/presentify-menus.php`.

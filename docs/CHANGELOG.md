@@ -8,6 +8,29 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-25
 
+#### Ditambah — Langkah 2.1: Migrasi & Model Tenant RBAC (`org_members` & `rbac_*`)
+
+**Verifikasi:** `php artisan test` → 80 passed, 286 assertions ✓ | `npm run build` → 2334 modules, 0 errors ✓
+
+**Migrasi Tenant DB** (`database/migrations/tenant/`)
+- `2026_11_25_000001_create_org_members_table.php` — tabel `org_members`: member lokal instansi, NIP unik, penempatan `unit_id`, status, soft-deletes.
+- `2026_11_25_000002_create_rbac_menus_table.php` — tabel `rbac_menus`: master menu sistem dengan `key` immutable, hierarki `parent_id`, `custom_label` untuk overriding label per tenant, `sort_order`.
+- `2026_11_25_000003_create_rbac_roles_table.php` — tabel `rbac_roles`: 5 role standar dengan flag `is_system` (tidak bisa dihapus).
+- `2026_11_25_000004_create_rbac_permissions_table.php` — tabel `rbac_permissions`: 2-tier permission (`menu_id != null` = menu-bound Tier-1; `menu_id = null` = global Tier-2).
+- `2026_11_25_000005_create_rbac_role_has_permissions_table.php` — pivot `rbac_role_has_permissions`: relasi many-to-many role ↔ permission.
+- `2026_11_25_000006_create_rbac_model_has_roles_table.php` — pivot `rbac_model_has_roles`: relasi polymorphic member ↔ role.
+
+**Eloquent Models** (`app/Models/`)
+- `Member.php` (`org_members`) — relasi `unit()`, `roles()` (via pivot polymorphic), helper `hasRole()` & `hasPermission()`.
+- `Menu.php` (`rbac_menus`) — relasi `parent()`, `children()`, `permissions()`, accessor `getDisplayLabelAttribute()` (custom_label > label).
+- `Role.php` (`rbac_roles`) — relasi `permissions()`, helper `givePermissions()` & `syncPermissions()`.
+- `Permission.php` (`rbac_permissions`) — relasi `menu()`, `roles()`, helper `isGlobal()` & `isMenuBound()`.
+
+**Seeder**
+- `database/seeders/RbacSeeder.php` — upsert idempotent 5 role sistem (superadmin_saas, admin_tenant, verifier, member, kiosk) + 6 global permission + matriks assignment per role.
+
+---
+
 #### Ditambah — Langkah 1.4: Multi-Tenant Workspace Picker & Single Logout (SLO)
 
 **Verifikasi:** `phpstan analyse` (file Langkah 1.4, level 7) → 0 errors ✓ | `php artisan test` → 77 passed, 277 assertions ✓ | `tsc --noEmit` → 0 errors ✓ | `npm.cmd run build` → 2333 modules ✓
