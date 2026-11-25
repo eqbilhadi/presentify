@@ -8,6 +8,24 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-25
 
+#### Ditambah — Langkah 2.2: Master Registry Menu & Non-Destructive Sync
+
+**Verifikasi:** `php artisan test` → 90 passed, 298 assertions ✓ | `npm run build` → 2334 modules, 0 errors ✓
+
+**Config**
+- `config/presentify-menus.php` — master registry 17 menu sistem: Dashboard, Presensi (Catat/Riwayat/Izin), Persetujuan, Laporan, Pengaturan (Organisasi, Peran, Menu, Kebijakan, Profil, Tema, Workflow, Audit). Setiap entri memiliki `key` immutable, `permissions` list untuk Tier-1, dan `parent` reference.
+
+**OOP Service**
+- `app/Services/Rbac/MenuSyncService.php` — sinkronisasi non-destructive: upsert menu sistem dari registry, **tidak menimpa** `custom_label`, `icon`, `sort_order` yang telah dikustomisasi tenant; upsert menu-bound permissions otomatis sesuai action list; idempotent (aman dijalankan berulang).
+
+**Artisan Command**
+- `app/Console/Commands/SyncMenusCommand.php` — `tenants:sync-menus [--tenant=UUID]`: menjalankan `MenuSyncService::sync()` untuk semua tenant atau tenant tertentu, dengan progress bar.
+
+**Feature Test**
+- `tests/Feature/Rbac/MenuSyncServiceTest.php` — 10 test cases: jumlah menu sesuai registry, jumlah permission menu-bound, hierarki parent_id benar, non-destructive pada `custom_label`/`icon`/`sort_order`, idempotency, pemulihan `label` sistem, isolasi permission global, konvensi nama `key.action`.
+
+---
+
 #### Ditambah — Langkah 2.1: Migrasi & Model Tenant RBAC (`org_members` & `rbac_*`)
 
 **Verifikasi:** `php artisan test` → 80 passed, 286 assertions ✓ | `npm run build` → 2334 modules, 0 errors ✓

@@ -107,10 +107,11 @@ Fokus: Arsitektur otorisasi modular di level database tenant.
     - `Permission` (`protected $table = 'rbac_permissions';`) [x]
   * Seeder 5 role bawaan: Superadmin SaaS, Admin Tenant, Atasan/Verifikator, Pegawai/Anggota, Akun Kiosk beserta matriks izin default di `rbac_role_has_permissions`. [x]
 
-- [ ] **Langkah 2.2: Master Registry Menu & Non-Destructive Sync**
-  * File konfigurasi master menu sistem `config/presentify-menus.php`.
-  * OOP Service: `App\Services\Rbac\MenuSyncService` (sinkronisasi menu bawaan sistem ke tabel `rbac_menus` pada DB tenant secara *non-destructive upsert* tanpa mengubah `custom_label`, `icon`, atau `sort_order` yang telah diatur tenant).
-  * Artisan Command `tenants:sync-menus` yang memanggil `MenuSyncService`.
+- [x] **Langkah 2.2: Master Registry Menu & Non-Destructive Sync** ✅ 2026-11-25
+  * File konfigurasi master menu sistem `config/presentify-menus.php`. [x]
+  * OOP Service: `App\Services\Rbac\MenuSyncService` (sinkronisasi menu bawaan sistem ke tabel `rbac_menus` pada DB tenant secara *non-destructive upsert* tanpa mengubah `custom_label`, `icon`, atau `sort_order` yang telah diatur tenant). [x]
+  * Artisan Command `tenants:sync-menus` yang memanggil `MenuSyncService`. [x]
+  * Feature test: `tests/Feature/Rbac/MenuSyncServiceTest.php` — 10 test cases. [x]
 
 - [ ] **Langkah 2.3: Custom Role Builder UI & 2-Tier Permission Engine**
   * FormRequest: `App\Http\Requests\Rbac\StoreRoleRequest` & `App\Http\Requests\Rbac\UpdateRolePermissionsRequest`.
