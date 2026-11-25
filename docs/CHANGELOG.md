@@ -8,6 +8,20 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-25
 
+#### Ditambah — Langkah 1.4: Multi-Tenant Workspace Picker & Single Logout (SLO)
+
+**Verifikasi:** `phpstan analyse` (file Langkah 1.4, level 7) → 0 errors ✓ | `php artisan test` → 77 passed, 277 assertions ✓ | `tsc --noEmit` → 0 errors ✓ | `npm.cmd run build` → 2333 modules ✓
+
+**Backend (FormRequest, Service, Controller & Routes)**
+- `app/Http/Requests/Auth/SwitchTenantRequest.php` — validasi `tenant_id` terhadap daftar tenant aktif milik pengguna pada `sys_tenant_user`.
+- `app/Services/Auth/WorkspaceService.php` — `getActiveTenants()`, `switchTenant()` (menerbitkan token SSO melalui `SsoService` dan mengarahkan ke callback subdomain), serta `singleLogout()` (logout guard `web`, invalidasi & regenerasi token sesi, redirect ke login).
+- `app/Http/Controllers/Auth/WorkspaceController.php` — Thin Controller (`index`, `switch`, `logout`) yang mendelegasikan proses ke `WorkspaceService` dan merender `auth/tenant-picker`.
+- `routes/web.php` — mendaftarkan `GET /workspace` (`workspace.picker`), `POST /workspace/switch` (`workspace.switch`) dengan middleware `auth` + `PreventAccessFromTenantDomains`, serta `POST /logout-all` (`logout.slo`).
+
+**Frontend & Test**
+- `resources/js/pages/auth/tenant-picker.tsx` — halaman pemilih instansi menggunakan komponen shadcn/ui `Card`, form switch instansi via Wayfinder (`switchMethod.url()`), state kosong, dan tombol Single Logout (`logoutSlo.url()`).
+- `tests/Feature/Auth/WorkspacePickerTest.php` — 11 test cases (tampilan picker multi-tenant, atribut tenant, redirect guest, isolasi 404 di subdomain tenant, switch tenant ke SSO callback, penolakan tenant tidak sah/non-aktif, dan Single Logout), serta penyesuaian `tests/Feature/Auth/SsoHandshakeTest.php`.
+
 #### Diperbarui — Isolasi Route Central dari Subdomain Tenant
 
 **Verifikasi:** `pint --test` ✓ | `phpstan analyse` → 0 errors ✓ | `php artisan test` → 66 passed, 231 assertions ✓ | `npm run build` → 2330 modules ✓

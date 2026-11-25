@@ -32,10 +32,12 @@ afterEach(function () use (&$createdTenants) {
 
 function expectedCallbackPrefix(string $slug): string
 {
+    $host = parse_url((string) config('app.url'), PHP_URL_HOST);
+    $rootHost = is_string($host) && $host !== '' ? preg_replace('/^app\./', '', $host) : 'localhost';
     $port = parse_url((string) config('app.url'), PHP_URL_PORT);
     $portSuffix = is_int($port) ? ":{$port}" : '';
 
-    return "http://{$slug}.localhost{$portSuffix}/sso/callback?token=";
+    return "http://{$slug}.{$rootHost}{$portSuffix}/sso/callback?token=";
 }
 
 function makeTenantWithSubdomain(string $slug, bool $isActive = true): Tenant
@@ -161,7 +163,7 @@ it('does not redirect to inactive tenant or inactive membership', function () us
     $this->assertDatabaseCount('auth_sso_tokens', 0);
 });
 
-it('keeps multi-tenant users on central dashboard fallback until workspace picker exists', function () use (&$createdTenants) {
+it('redirects multi-tenant users to workspace picker after login', function () use (&$createdTenants) {
     $user = User::factory()->create();
     $tenantA = makeTenantWithSubdomain('disdukcapil');
     $tenantB = makeTenantWithSubdomain('sman1contoh');
@@ -190,7 +192,7 @@ it('keeps multi-tenant users on central dashboard fallback until workspace picke
         'password' => 'password',
     ]);
 
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $response->assertRedirect(route('workspace.picker'));
     $this->assertDatabaseCount('auth_sso_tokens', 0);
 });
 
@@ -339,4 +341,31 @@ it('blocks accessing central routes from tenant subdomains', function () use (&$
     $this->get('http://disdukcapil.localhost/login')->assertNotFound();
     $this->get('http://disdukcapil.localhost/register')->assertNotFound();
     $this->get('http://disdukcapil.localhost/auth/otp')->assertNotFound();
+});
+
+it('redirects tenant subdomain logout to signed central slo callback and clears central session', function () use (&$createdTenants) {
+    $user = User::factory()->create();
+    $tenant = makeTenantWithSubdomain('disdukcapil');
+    $createdTenants[] = $tenant;
+
+    $response = $this->actingAs($user)
+        ->withHeaders(['X-Inertia' => 'true'])
+        ->post('http://disdukcapil.presentify.test/logout');
+
+    $response->assertStatus(409);
+    $location = (string) $response->headers->get('X-Inertia-Location');
+    expect($location)->toStartWith('http://presentify.test/sso/logout?');
+    $this->assertGuest();
+
+    // Simulate central session still present when browser follows the signed SLO callback.
+    $this->flushHeaders()
+        ->actingAs($user)
+        ->get($location)
+        ->assertRedirect(route('login'));
+
+    $this->assertGuest();
+});
+
+it('rejects unsigned central slo callback requests', function () {
+    $this->get('http://presentify.test/sso/logout')->assertForbidden();
 });

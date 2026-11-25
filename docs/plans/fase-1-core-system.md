@@ -86,11 +86,12 @@ Fokus: Menyiapkan Central DB, mekanisme multi-koneksi database, autentikasi terp
   * Middleware & Tenancy Alignment: registrasi `App\Providers\TenancyServiceProvider` di `bootstrap/providers.php`, trait `CentralConnection` pada model Central DB (`User`, `TenantUser`, `OtpToken`, `SsoToken`), `InitializeTenancyBySubdomainIfApplicable` + `ScopeSessions` di pipeline `web`, dan penyesuaian format domain subdomain di `CentralDatabaseSeeder`. [x]
   * Feature test: `tests/Feature/Auth/SsoHandshakeTest.php` — 13 test cases (redirect otomatis 1 tenant pada Password & OTP login, 409 `X-Inertia-Location`, replay protection, expired token, cross-tenant rejection, revoked membership, central domain 404 isolation, callback validation, `app.*` subdomain URL resolution). [x]
 
-- [ ] **Langkah 1.4: Multi-Tenant Workspace Picker & Single Logout (SLO)**
-  * FormRequest: `App\Http\Requests\Auth\SwitchTenantRequest`.
-  * OOP Service: `App\Services\Auth\WorkspaceService` (mengambil daftar instansi aktif user dari `sys_tenant_user`, inisiasi perpindahan tenant, dan orkestrasi Single Logout / SLO antar tenant & central).
-  * Thin Controller: `App\Http\Controllers\Auth\WorkspaceController` (render halaman pemilih instansi, switch tenant, dan handle SLO).
-  * Frontend: Halaman Inertia React `auth/tenant-picker.tsx` (kartu instansi shadcn/ui) dan komponen dropdown *Instansi Switcher* pada `app-sidebar.tsx`.
+- [x] **Langkah 1.4: Multi-Tenant Workspace Picker & Single Logout (SLO)** ✅ 2026-11-25
+  * FormRequest: `App\Http\Requests\Auth\SwitchTenantRequest`. [x]
+  * OOP Service: `App\Services\Auth\WorkspaceService` (mengambil daftar instansi aktif user dari `sys_tenant_user`, inisiasi perpindahan tenant via `SsoService`, dan Single Logout / SLO). [x]
+  * Thin Controller: `App\Http\Controllers\Auth\WorkspaceController` (render halaman pemilih instansi, switch tenant, dan handle SLO). [x]
+  * Frontend: Halaman Inertia React `auth/tenant-picker.tsx` (kartu instansi shadcn/ui & tombol SLO). [x]
+  * Feature test: `tests/Feature/Auth/WorkspacePickerTest.php` (11 test cases). [x]
 
 ---
 
