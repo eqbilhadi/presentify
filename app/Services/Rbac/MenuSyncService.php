@@ -62,7 +62,9 @@ class MenuSyncService
     {
         $parentId = null;
         if ($entry['parent'] !== null) {
-            $parentId = $this->menuCache[$entry['parent']]?->id;
+            $parentId = isset($this->menuCache[$entry['parent']])
+                ? $this->menuCache[$entry['parent']]->id
+                : null;
         }
 
         // Find existing menu by key
@@ -71,21 +73,21 @@ class MenuSyncService
         if ($menu === null) {
             // Create brand-new entry — all fields from registry
             $menu = Menu::create([
-                'key'         => $entry['key'],
-                'label'       => $entry['label'],
-                'icon'        => $entry['icon'],
-                'route_name'  => $entry['route_name'],
-                'parent_id'   => $parentId,
-                'sort_order'  => $entry['sort_order'],
-                'is_visible'  => true,
+                'key' => $entry['key'],
+                'label' => $entry['label'],
+                'icon' => $entry['icon'],
+                'route_name' => $entry['route_name'],
+                'parent_id' => $parentId,
+                'sort_order' => $entry['sort_order'],
+                'is_visible' => true,
                 // custom_label intentionally left null — tenant fills this later
             ]);
         } else {
             // Update only system-owned fields; skip tenant-customizable ones
             $menu->update([
-                'label'      => $entry['label'],
+                'label' => $entry['label'],
                 'route_name' => $entry['route_name'],
-                'parent_id'  => $parentId,
+                'parent_id' => $parentId,
                 // NOT updated: custom_label, icon, sort_order
             ]);
         }
@@ -99,7 +101,7 @@ class MenuSyncService
     /**
      * Upsert Tier-1 (menu-bound) permissions for the given menu.
      *
-     * @param string[] $actions
+     * @param  string[]  $actions
      */
     private function syncMenuPermissions(Menu $menu, array $actions): void
     {
@@ -109,8 +111,8 @@ class MenuSyncService
             Permission::updateOrCreate(
                 ['name' => $permName, 'menu_id' => $menu->id],
                 [
-                    'label'   => $this->buildPermissionLabel($menu->label, $action),
-                    'action'  => $action,
+                    'label' => $this->buildPermissionLabel($menu->label, $action),
+                    'action' => $action,
                 ],
             );
         }
@@ -119,9 +121,9 @@ class MenuSyncService
     private function buildPermissionLabel(string $menuLabel, string $action): string
     {
         $actionLabels = [
-            'view'   => 'Lihat',
+            'view' => 'Lihat',
             'create' => 'Tambah',
-            'edit'   => 'Ubah',
+            'edit' => 'Ubah',
             'delete' => 'Hapus',
             'export' => 'Ekspor',
             'import' => 'Impor',

@@ -113,11 +113,12 @@ Fokus: Arsitektur otorisasi modular di level database tenant.
   * Artisan Command `tenants:sync-menus` yang memanggil `MenuSyncService`. [x]
   * Feature test: `tests/Feature/Rbac/MenuSyncServiceTest.php` — 10 test cases. [x]
 
-- [ ] **Langkah 2.3: Custom Role Builder UI & 2-Tier Permission Engine**
-  * FormRequest: `App\Http\Requests\Rbac\StoreRoleRequest` & `App\Http\Requests\Rbac\UpdateRolePermissionsRequest`.
-  * OOP Service: `App\Services\Rbac\RoleBuilderService` (transaksi penyimpanan custom role, sinkronisasi relasi `rbac_role_has_permissions`, dan kalkulasi permission 2-tier: menu-bound `menu_id != null` vs global `menu_id = null`).
-  * Thin Controller: `App\Http\Controllers\Rbac\RoleController` (delegasi ke `RoleBuilderService`, render `pages/settings/roles/index.tsx` & `role-editor.tsx`).
-  * Middleware & Gate otorisasi untuk pengecekan hak akses menu-bound dan global permission.
+- [x] **Langkah 2.3: Custom Role Builder UI & 2-Tier Permission Engine** ✅ 2026-11-25
+  * FormRequest: `App\Http\Requests\Rbac\StoreRoleRequest` & `App\Http\Requests\Rbac\UpdateRolePermissionsRequest`. [x]
+  * OOP Service: `App\Services\Rbac\RoleBuilderService` (transaksi penyimpanan custom role, sinkronisasi relasi `rbac_role_has_permissions`, dan kalkulasi permission 2-tier: menu-bound `menu_id != null` vs global `menu_id = null` dengan auto-include `view`). [x]
+  * OOP Service & Gate/Middleware: `App\Services\Rbac\PermissionService`, `App\Http\Middleware\EnsureHasPermission` (`permission` alias), serta registrasi `Gate` di `AppServiceProvider`. [x]
+  * Thin Controller: `App\Http\Controllers\Rbac\RoleController` (delegasi ke `RoleBuilderService`, render `pages/settings/roles/index.tsx` & `role-editor.tsx`). [x]
+  * Feature test: `tests/Feature/Rbac/RoleBuilderTest.php` — 10 test cases. [x]
 
 - [ ] **Langkah 2.4: Dynamic Sidebar Menu Editor & Layout Integration**
   * FormRequest: `App\Http\Requests\Rbac\UpdateMenuLayoutRequest`.

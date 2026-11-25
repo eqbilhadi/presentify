@@ -8,6 +8,31 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-25
 
+#### Ditambah — Langkah 2.3: Custom Role Builder UI & 2-Tier Permission Engine
+
+**Verifikasi:** `phpstan analyse` (modul RBAC, level 7) → 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `npm run build` → 2339 modules, 0 errors ✓ | `php artisan test` → 100 passed, 368 assertions ✓
+
+**Models, Gate & Middleware**
+- `app/Models/Role.php` & `app/Models/Member.php` — perbaikan relasi `BelongsToMany` `menuBoundPermissions()`, `globalPermissions()`, `members()`, serta helper `scopeActive()`, `findActiveForUser()`, `assignRole()`, dan `syncRoles()`.
+- `app/Services/Rbac/PermissionService.php` — evaluator 2-tier permission (`allows()`, `allowsAny()`, `hasKnownPermission()`, `getEffectivePermissionsForUser()`) dengan memoization per tenant+user, bypass untuk `superadmin_saas`, serta kewajiban izin `view` aktif untuk aksi menu-bound non-`view`.
+- `app/Http/Middleware/EnsureHasPermission.php` & `bootstrap/app.php` — middleware alias `permission` dengan dukungan sintaks OR (`permission:settings.roles.view|manage_tenant`).
+- `app/Providers/AppServiceProvider.php` — registrasi singleton `PermissionService`, `Gate::define('has-permission', ...)`, serta `Gate::before()` agar `$user->can()` / `Gate::allows()` bekerja langsung untuk permission tenant.
+
+**FormRequests, OOP Service, Thin Controller & Routes**
+- `app/Http/Requests/Rbac/StoreRoleRequest.php` & `app/Http/Requests/Rbac/UpdateRolePermissionsRequest.php` — validasi input role & permission beserta method `payload()` bertipe ketat.
+- `app/Services/Rbac/RoleBuilderService.php` — CRUD role transaksional, pembentuk matriks 2-tier (`getPermissionMatrix()`), auto-slug unik, proteksi penghapusan role sistem (`is_system`), dan auto-inclusion izin `view` untuk aksi menu-bound non-`view`.
+- `app/Http/Controllers/Rbac/RoleController.php` & `routes/tenant.php` — Thin Controller (`index`, `create`, `store`, `edit`, `update`, `destroy`) dengan proteksi middleware `permission` per aksi pada subdomain tenant.
+
+**Frontend (Inertia React + shadcn/ui)**
+- `resources/js/pages/settings/roles/index.tsx` — daftar peran bawaan & kustom, pencarian & filter jenis peran, tabel desktop + kartu mobile, dialog konfirmasi hapus peran kustom.
+- `resources/js/pages/settings/roles/role-editor.tsx` — editor peran & matriks 2-tier (Tier 1: matriks menu dengan auto-toggle `view` saat aksi lain dipilih; Tier 2: daftar izin global lintas modul), dukungan layout responsif desktop/mobile.
+- `resources/js/app.tsx` & `resources/css/app.css` — routing layout lebar penuh (`AppLayout`) untuk `settings/roles/*` serta base CSS `cursor: pointer` / `cursor: not-allowed` untuk elemen interaktif.
+
+**Feature Test**
+- `tests/Feature/Rbac/RoleBuilderTest.php` — 10 test cases (isolasi central domain, redirect guest, 403 akses tanpa izin, akses `admin_tenant` & custom role `settings.roles.view`, auto-slug + auto-include `view` pada Tier-1, proteksi slug & penghapusan role sistem, penegakan 2-tier via `Gate` & `PermissionService`, dan rendering Inertia editor).
+
+---
+
 #### Ditambah — Langkah 2.2: Master Registry Menu & Non-Destructive Sync
 
 **Verifikasi:** `php artisan test` → 90 passed, 298 assertions ✓ | `npm run build` → 2334 modules, 0 errors ✓
