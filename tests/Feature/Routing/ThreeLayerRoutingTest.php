@@ -145,3 +145,36 @@ it('ignores nested subdirectories in RouteLoader::load', function () {
         File::deleteDirectory($baseDir);
     }
 });
+
+it('allows confirm password and security fortify routes on known tenant subdomains while blocking guest auth routes and unknown domains', function () use (&$createdTenants) {
+    $tenant = makeRoutingTenant($createdTenants);
+    $user = User::factory()->create();
+
+    TenantUser::create([
+        'tenant_id' => $tenant->id,
+        'user_id' => $user->id,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->withoutVite()
+        ->get("http://{$tenant->slug}.presentify.test/settings/security")
+        ->assertRedirect("http://{$tenant->slug}.presentify.test/user/confirm-password");
+
+    $this->actingAs($user)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->withoutVite()
+        ->get("http://{$tenant->slug}.presentify.test/user/confirm-password")
+        ->assertOk();
+
+    $this->actingAs($user)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->post("http://{$tenant->slug}.presentify.test/user/confirm-password", [
+            'password' => 'password',
+        ])
+        ->assertRedirect();
+
+    $this->get("http://{$tenant->slug}.presentify.test/login")->assertNotFound();
+    $this->actingAs($user)->get('http://unknown-tenant.presentify.test/user/confirm-password')->assertNotFound();
+});

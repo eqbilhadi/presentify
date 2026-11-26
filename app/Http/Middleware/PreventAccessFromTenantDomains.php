@@ -14,7 +14,19 @@ class PreventAccessFromTenantDomains
             return $next($request);
         }
 
-        if ($request->routeIs('logout')) {
+        if (tenancy()->initialized && $request->routeIs(
+            'logout',
+            'password.confirm',
+            'password.confirm.store',
+            'password.confirmation',
+            'two-factor.enable',
+            'two-factor.disable',
+            'two-factor.confirm',
+            'two-factor.qr-code',
+            'two-factor.secret-key',
+            'two-factor.recovery-codes',
+            'two-factor.regenerate-recovery-codes',
+        )) {
             return $next($request);
         }
 
