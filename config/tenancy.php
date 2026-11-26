@@ -4,11 +4,19 @@ declare(strict_types=1);
 
 use App\Models\Domain;
 use App\Models\Tenant;
+use Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper;
+use Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper;
+use Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper;
+use Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper;
+use Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager;
+use Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager;
+use Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager;
+use Stancl\Tenancy\UUIDGenerator;
 
 return [
     'tenant_model' => Tenant::class,
 
-    'id_generator' => Stancl\Tenancy\UUIDGenerator::class,
+    'id_generator' => UUIDGenerator::class,
 
     'domain_model' => Domain::class,
 
@@ -20,10 +28,10 @@ return [
     ],
 
     'bootstrappers' => [
-        Stancl\Tenancy\Bootstrappers\DatabaseTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\CacheTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\FilesystemTenancyBootstrapper::class,
-        Stancl\Tenancy\Bootstrappers\QueueTenancyBootstrapper::class,
+        DatabaseTenancyBootstrapper::class,
+        CacheTenancyBootstrapper::class,
+        FilesystemTenancyBootstrapper::class,
+        QueueTenancyBootstrapper::class,
     ],
 
     'database' => [
@@ -36,10 +44,10 @@ return [
         'suffix' => '',
 
         'managers' => [
-            'mysql'   => Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager::class,
-            'mariadb' => Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager::class,
-            'pgsql'   => Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager::class,
-            'sqlite'  => Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager::class,
+            'mysql' => MySQLDatabaseManager::class,
+            'mariadb' => MySQLDatabaseManager::class,
+            'pgsql' => PostgreSQLDatabaseManager::class,
+            'sqlite' => SQLiteDatabaseManager::class,
         ],
     ],
 
@@ -54,7 +62,7 @@ return [
             'public',
         ],
         'root_override' => [
-            'local'  => '%storage_path%/app/',
+            'local' => '%storage_path%/app/',
             'public' => '%storage_path%/app/public/',
         ],
         'suffix_storage_path' => true,
@@ -62,7 +70,7 @@ return [
     ],
 
     'redis' => [
-        'prefix_base'        => 'tenant',
+        'prefix_base' => 'tenant',
         'prefixed_connections' => [],
     ],
 
@@ -71,12 +79,13 @@ return [
     'routes' => true,
 
     'migration_parameters' => [
-        '--force'    => true,
-        '--path'     => [database_path('migrations/tenant')],
+        '--force' => true,
+        '--path' => [database_path('migrations/tenant')],
         '--realpath' => true,
     ],
 
     'seeder_parameters' => [
-        '--class' => 'DatabaseSeeder',
+        '--class' => 'Database\\Seeders\\TenantDatabaseSeeder',
+        '--force' => true,
     ],
 ];

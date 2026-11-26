@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
+use Stancl\Tenancy\Contracts\TenantCouldNotBeIdentifiedException;
+use Stancl\Tenancy\Exceptions\NotASubdomainException;
 use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
 use Stancl\Tenancy\Middleware\ScopeSessions;
 use Symfony\Component\HttpFoundation\Response;
@@ -37,7 +39,16 @@ class InitializeTenancyBySubdomainIfApplicable
             return $afterInit($request);
         }
 
-        return app(InitializeTenancyBySubdomain::class)->handle($request, $afterInit);
+        try {
+            return app(InitializeTenancyBySubdomain::class)->handle($request, $afterInit);
+        } catch (TenantCouldNotBeIdentifiedException|NotASubdomainException) {
+            if (tenancy()->initialized) {
+                tenancy()->end();
+            }
+
+            // Defer unknown-domain rejection to EnsureKnownDomain / PreventAccessFromTenantDomains.
+            return $next($request);
+        }
     }
 
     private function isCentralOrIpRequest(string $hostname): bool

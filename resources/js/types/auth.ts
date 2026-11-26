@@ -1,3 +1,5 @@
+import type { MenuNode } from './rbac';
+
 export type User = {
     id: number;
     name: string;
@@ -10,8 +12,21 @@ export type User = {
     [key: string]: unknown;
 };
 
+export type TenantSummary = {
+    id: string;
+    name: string;
+    slug: string;
+};
+
+export type TenancyState = {
+    current: TenantSummary | null;
+    tenants: TenantSummary[];
+};
+
 export type Auth = {
     user: User;
+    permissions: string[];
+    menus: MenuNode[];
 };
 
 export type Passkey = {

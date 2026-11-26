@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\ScopeSessions;
@@ -22,6 +23,10 @@ class SsoService
     private const TTL_SECONDS = 60;
 
     private const TOKEN_BYTES = 32;
+
+    private const STATE_LENGTH = 40;
+
+    private const STATE_SESSION_KEY = 'sso_state';
 
     public function issueToken(User $user, Tenant $tenant): string
     {
@@ -47,23 +52,73 @@ class SsoService
         return $plainToken;
     }
 
-    public function createCallbackUrl(User $user, Tenant $tenant, ?Request $request = null): string
-    {
+    public function createCallbackUrl(
+        User $user,
+        Tenant $tenant,
+        ?Request $request = null,
+        ?string $state = null,
+    ): string {
         $plainToken = $this->issueToken($user, $tenant);
 
-        return $this->buildCallbackUrl($tenant, $plainToken, $request);
+        return $this->buildCallbackUrl($tenant, $plainToken, $request, $state);
     }
 
-    public function buildCallbackUrl(Tenant $tenant, string $plainToken, ?Request $request = null): string
-    {
+    public function buildCallbackUrl(
+        Tenant $tenant,
+        string $plainToken,
+        ?Request $request = null,
+        ?string $state = null,
+    ): string {
         $tenantHost = $this->resolveTenantHost($tenant, $request);
         [$scheme, $portSuffix] = $this->resolveSchemeAndPort($request);
 
-        return "{$scheme}://{$tenantHost}{$portSuffix}/sso/callback?token=".urlencode($plainToken);
+        $query = ['token' => $plainToken];
+
+        if (is_string($state) && $state !== '') {
+            $query['state'] = $state;
+        }
+
+        return "{$scheme}://{$tenantHost}{$portSuffix}/sso/callback?".http_build_query($query);
     }
 
-    public function validateAndLogin(string $plainToken, Tenant $tenant, ?Request $request = null): User
+    public function initiateSpLogin(Request $request): SymfonyResponse
     {
+        $state = Str::random(self::STATE_LENGTH);
+        $request->session()->put(self::STATE_SESSION_KEY, $state);
+
+        $authorizeUrl = $this->buildCentralUrl(
+            $request,
+            '/auth/sso/authorize',
+            [
+                'domain' => $request->getHost(),
+                'state' => $state,
+            ],
+        );
+
+        return Inertia::location($authorizeUrl);
+    }
+
+    public function authorizeSpInitiated(User $user, string $domain, string $state, Request $request): SymfonyResponse
+    {
+        $tenant = $this->resolveActiveTenantByDomain($domain);
+
+        if (! $tenant instanceof Tenant) {
+            throw new AccessDeniedHttpException('Instansi tujuan tidak ditemukan atau tidak aktif.');
+        }
+
+        $callbackUrl = $this->createCallbackUrl($user, $tenant, $request, $state);
+
+        return Inertia::location($callbackUrl);
+    }
+
+    public function validateAndLogin(
+        string $plainToken,
+        Tenant $tenant,
+        ?Request $request = null,
+        ?string $state = null,
+    ): User {
+        $this->assertValidCallbackState($request, $state);
+
         $centralConnection = config('tenancy.database.central_connection');
         $errorMessage = null;
 
@@ -124,6 +179,13 @@ class SsoService
 
     public function resolvePostLoginResponse(Request $request, User $user): SymfonyResponse
     {
+        // Preserve SP-initiated SSO authorize flow (including its anti-CSRF state) when interrupted by login.
+        $intendedUrl = $request->session()->get('url.intended');
+
+        if (is_string($intendedUrl) && parse_url($intendedUrl, PHP_URL_PATH) === '/auth/sso/authorize') {
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
         $activeTenants = $user->activeTenants()
             ->where('sys_tenants.is_active', true)
             ->with('domains')
@@ -142,6 +204,108 @@ class SsoService
         }
 
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    public function logoutTenantAndRedirectToCentralSlo(Request $request): SymfonyResponse
+    {
+        Auth::guard('web')->logout();
+
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        return Inertia::location($this->createCentralSloUrl($request));
+    }
+
+    public function createCentralSloUrl(Request $request): string
+    {
+        $relativeSignedPath = URL::temporarySignedRoute(
+            'central.sso.logout',
+            now()->addMinute(),
+            [],
+            false,
+        );
+
+        $centralHost = $this->resolveCentralRootDomain($request);
+        [$scheme, $portSuffix] = $this->resolveSchemeAndPort($request);
+
+        return "{$scheme}://{$centralHost}{$portSuffix}{$relativeSignedPath}";
+    }
+
+    private function assertValidCallbackState(?Request $request, ?string $state): void
+    {
+        $expectedState = $request?->hasSession()
+            ? $request->session()->pull(self::STATE_SESSION_KEY)
+            : null;
+
+        if (is_string($expectedState) && $expectedState !== '') {
+            if (! is_string($state) || ! hash_equals($expectedState, $state)) {
+                throw new AccessDeniedHttpException('Parameter state SSO tidak valid.');
+            }
+
+            return;
+        }
+
+        if (is_string($state) && $state !== '') {
+            throw new AccessDeniedHttpException('Sesi state SSO tidak ditemukan.');
+        }
+    }
+
+    private function resolveActiveTenantByDomain(string $domain): ?Tenant
+    {
+        $normalized = strtolower(trim($domain));
+
+        if ($normalized === '') {
+            return null;
+        }
+
+        $domainRecord = Domain::query()
+            ->where('domain', $normalized)
+            ->with('tenant')
+            ->first();
+
+        if ($domainRecord?->tenant instanceof Tenant && $domainRecord->tenant->is_active) {
+            return $domainRecord->tenant;
+        }
+
+        /** @var array<int, string> $centralDomains */
+        $centralDomains = config('tenancy.central_domains', []);
+
+        foreach ($centralDomains as $centralDomain) {
+            if (filter_var($centralDomain, FILTER_VALIDATE_IP) !== false) {
+                continue;
+            }
+
+            if (str_ends_with($normalized, ".{$centralDomain}")) {
+                $subdomain = Str::beforeLast($normalized, ".{$centralDomain}");
+
+                if ($subdomain !== '' && ! str_contains($subdomain, '.')) {
+                    $subdomainRecord = Domain::query()
+                        ->where('domain', $subdomain)
+                        ->with('tenant')
+                        ->first();
+
+                    if ($subdomainRecord?->tenant instanceof Tenant && $subdomainRecord->tenant->is_active) {
+                        return $subdomainRecord->tenant;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, string>  $query
+     */
+    private function buildCentralUrl(Request $request, string $path, array $query = []): string
+    {
+        $centralHost = $this->resolveCentralRootDomain($request);
+        [$scheme, $portSuffix] = $this->resolveSchemeAndPort($request);
+        $queryString = $query !== [] ? '?'.http_build_query($query) : '';
+
+        return "{$scheme}://{$centralHost}{$portSuffix}{$path}{$queryString}";
     }
 
     private function resolveTenantHost(Tenant $tenant, ?Request $request): string
@@ -180,6 +344,12 @@ class SsoService
 
         if (filter_var($host, FILTER_VALIDATE_IP) === false && in_array($host, $centralDomains, true)) {
             return $host;
+        }
+
+        foreach ($centralDomains as $candidate) {
+            if (filter_var($candidate, FILTER_VALIDATE_IP) === false && str_ends_with($host, ".{$candidate}")) {
+                return $candidate;
+            }
         }
 
         foreach ($centralDomains as $candidate) {

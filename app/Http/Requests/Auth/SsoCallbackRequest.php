@@ -18,6 +18,7 @@ class SsoCallbackRequest extends FormRequest
     {
         return [
             'token' => ['required', 'string', 'size:64'],
+            'state' => ['nullable', 'string', 'size:40'],
         ];
     }
 }

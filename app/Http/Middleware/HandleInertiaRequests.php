@@ -2,6 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
+use App\Models\User;
+use App\Services\Auth\WorkspaceService;
+use App\Services\Rbac\MenuService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -15,6 +19,11 @@ class HandleInertiaRequests extends Middleware
      * @var string
      */
     protected $rootView = 'app';
+
+    public function __construct(
+        private readonly WorkspaceService $workspaceService,
+        private readonly MenuService $menuService,
+    ) {}
 
     /**
      * Determines the current asset version.
@@ -35,11 +44,47 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $activeTenant = tenancy()->initialized ? tenant() : null;
+
+        $currentTenant = $activeTenant instanceof Tenant
+            ? [
+                'id' => $activeTenant->id,
+                'name' => $activeTenant->name,
+                'slug' => $activeTenant->slug,
+            ]
+            : null;
+
+        $availableTenants = $user instanceof User
+            ? $this->workspaceService->getActiveTenants($user)
+                ->map(fn (Tenant $tenant): array => [
+                    'id' => $tenant->id,
+                    'name' => $tenant->name,
+                    'slug' => $tenant->slug,
+                ])
+                ->values()
+                ->all()
+            : [];
+
+        $permissions = $user instanceof User
+            ? $user->getAllPermissions()->pluck('name')->values()->all()
+            : [];
+
+        $menus = $user instanceof User
+            ? $this->menuService->getMenusForUser($user)
+            : [];
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'permissions' => $permissions,
+                'menus' => $menus,
+            ],
+            'tenancy' => [
+                'current' => $currentTenant,
+                'tenants' => $availableTenants,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Models\User;
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\PermissionRegistrar;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
@@ -17,6 +21,9 @@ class TenancyServiceProvider extends ServiceProvider
 {
     public static string $controllerNamespace = '';
 
+    /**
+     * @return array<class-string, array<int, mixed>>
+     */
     public function events(): array
     {
         return [
@@ -25,14 +32,14 @@ class TenancyServiceProvider extends ServiceProvider
                 JobPipeline::make([
                     Jobs\CreateDatabase::class,
                     Jobs\MigrateDatabase::class,
-                    // Jobs\SeedDatabase::class,
+                    Jobs\SeedDatabase::class,
                 ])->send(function (Events\TenantCreated $event) {
                     return $event->tenant;
-                // Flip to true in production so DB provisioning is non-blocking
+                    // Flip to true in production so DB provisioning is non-blocking
                 })->shouldBeQueued(false),
             ],
-            Events\SavingTenant::class  => [],
-            Events\TenantSaved::class   => [],
+            Events\SavingTenant::class => [],
+            Events\TenantSaved::class => [],
             Events\UpdatingTenant::class => [],
             Events\TenantUpdated::class => [],
             Events\DeletingTenant::class => [],
@@ -45,34 +52,42 @@ class TenancyServiceProvider extends ServiceProvider
             ],
 
             Events\CreatingDomain::class => [],
-            Events\DomainCreated::class  => [],
-            Events\SavingDomain::class   => [],
-            Events\DomainSaved::class    => [],
+            Events\DomainCreated::class => [],
+            Events\SavingDomain::class => [],
+            Events\DomainSaved::class => [],
             Events\UpdatingDomain::class => [],
-            Events\DomainUpdated::class  => [],
+            Events\DomainUpdated::class => [],
             Events\DeletingDomain::class => [],
-            Events\DomainDeleted::class  => [],
+            Events\DomainDeleted::class => [],
 
-            Events\DatabaseCreated::class    => [],
-            Events\DatabaseMigrated::class   => [],
-            Events\DatabaseSeeded::class     => [],
+            Events\DatabaseCreated::class => [],
+            Events\DatabaseMigrated::class => [],
+            Events\DatabaseSeeded::class => [],
             Events\DatabaseRolledBack::class => [],
-            Events\DatabaseDeleted::class    => [],
+            Events\DatabaseDeleted::class => [],
 
             Events\InitializingTenancy::class => [],
-            Events\TenancyInitialized::class  => [
+            Events\TenancyInitialized::class => [
                 Listeners\BootstrapTenancy::class,
             ],
 
-            Events\EndingTenancy::class  => [],
-            Events\TenancyEnded::class   => [
+            Events\EndingTenancy::class => [],
+            Events\TenancyEnded::class => [
                 Listeners\RevertToCentralContext::class,
             ],
 
-            Events\BootstrappingTenancy::class    => [],
-            Events\TenancyBootstrapped::class     => [],
+            Events\BootstrappingTenancy::class => [],
+            Events\TenancyBootstrapped::class => [
+                function (): void {
+                    $this->resetPermissionContext();
+                },
+            ],
             Events\RevertingToCentralContext::class => [],
-            Events\RevertedToCentralContext::class  => [],
+            Events\RevertedToCentralContext::class => [
+                function (): void {
+                    $this->resetPermissionContext();
+                },
+            ],
 
             Events\SyncedResourceSaved::class => [
                 Listeners\UpdateSyncedResource::class,
@@ -88,6 +103,19 @@ class TenancyServiceProvider extends ServiceProvider
         $this->bootEvents();
         $this->mapRoutes();
         $this->makeTenancyMiddlewareHighestPriority();
+    }
+
+    protected function resetPermissionContext(): void
+    {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        if (Auth::hasUser()) {
+            $user = Auth::user();
+
+            if ($user instanceof User) {
+                $user->unsetRelation('roles')->unsetRelation('permissions');
+            }
+        }
     }
 
     protected function bootEvents(): void
@@ -123,9 +151,11 @@ class TenancyServiceProvider extends ServiceProvider
             Middleware\InitializeTenancyByRequestData::class,
         ];
 
+        /** @var \Illuminate\Foundation\Http\Kernel $kernel */
+        $kernel = $this->app->make(Kernel::class);
+
         foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]
-                ->prependToMiddlewarePriority($middleware);
+            $kernel->prependToMiddlewarePriority($middleware);
         }
     }
 }

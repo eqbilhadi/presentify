@@ -24,6 +24,7 @@ class WorkspaceService
         return $user->activeTenants()
             ->where('sys_tenants.is_active', true)
             ->with('domains')
+            ->orderBy('sys_tenants.name')
             ->get();
     }
 
@@ -41,8 +42,10 @@ class WorkspaceService
     {
         Auth::guard('web')->logout();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
 
         return redirect()->route('login');
     }

@@ -4,59 +4,42 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Permission\Models\Permission as SpatiePermission;
 
 /**
- * @property int         $id
- * @property string      $name      Slug permission
- * @property string      $label     Display label
- * @property int|null    $menu_id   NULL = global (Tier-2), set = menu-bound (Tier-1)
- * @property string      $action    view|create|edit|delete|export|import|override|bypass
+ * @property string $id
+ * @property string $name
+ * @property string $guard_name
+ * @property string|null $group
+ * @property-read MenuAction|null $menuAction
  */
-class Permission extends Model
+class Permission extends SpatiePermission
 {
+    use HasUlids;
+
     protected $table = 'rbac_permissions';
 
-    protected $fillable = [
-        'name',
-        'label',
-        'menu_id',
-        'action',
-    ];
+    protected $keyType = 'string';
 
-    protected function casts(): array
+    public $incrementing = false;
+
+    /**
+     * @return HasOne<MenuAction, $this>
+     */
+    public function menuAction(): HasOne
     {
-        return [
-            'menu_id' => 'integer',
-        ];
+        return $this->hasOne(MenuAction::class, 'permission_name', 'name');
     }
 
-    /** @return BelongsTo<Menu, $this> */
-    public function menu(): BelongsTo
+    /**
+     * @param  Builder<Permission>  $query
+     * @return Builder<Permission>
+     */
+    public function scopeStandalone(Builder $query): Builder
     {
-        return $this->belongsTo(Menu::class, 'menu_id');
-    }
-
-    /** @return BelongsToMany<Role, $this> */
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Role::class,
-            'rbac_role_has_permissions',
-            'permission_id',
-            'role_id',
-        );
-    }
-
-    public function isGlobal(): bool
-    {
-        return $this->menu_id === null;
-    }
-
-    public function isMenuBound(): bool
-    {
-        return $this->menu_id !== null;
+        return $query->doesntHave('menuAction');
     }
 }

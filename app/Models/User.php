@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasTenantAwareRoles;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -35,13 +36,15 @@ use Stancl\Tenancy\Database\Concerns\CentralConnection;
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use CentralConnection, HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+    use CentralConnection, HasFactory, HasTenantAwareRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
+
+    protected string $guard_name = 'web';
 
     protected function casts(): array
     {
         return [
-            'email_verified_at'       => 'datetime',
-            'password'                => 'hashed',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }

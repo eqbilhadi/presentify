@@ -18,8 +18,15 @@ class SsoCallbackController extends Controller
             abort(404);
         }
 
-        $service->validateAndLogin((string) $request->validated('token'), $tenant, $request);
+        $state = $request->validated('state');
 
-        return redirect()->to(route('dashboard', absolute: false));
+        $service->validateAndLogin(
+            (string) $request->validated('token'),
+            $tenant,
+            $request,
+            is_string($state) ? $state : null,
+        );
+
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 }

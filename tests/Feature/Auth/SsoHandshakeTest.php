@@ -354,7 +354,7 @@ it('redirects tenant subdomain logout to signed central slo callback and clears 
 
     $response->assertStatus(409);
     $location = (string) $response->headers->get('X-Inertia-Location');
-    expect($location)->toStartWith('http://presentify.test/sso/logout?');
+    expect($location)->toStartWith('http://presentify.test/auth/sso/logout?');
     $this->assertGuest();
 
     // Simulate central session still present when browser follows the signed SLO callback.
@@ -367,5 +367,5 @@ it('redirects tenant subdomain logout to signed central slo callback and clears 
 });
 
 it('rejects unsigned central slo callback requests', function () {
-    $this->get('http://presentify.test/sso/logout')->assertForbidden();
+    $this->get('http://presentify.test/auth/sso/logout')->assertForbidden();
 });

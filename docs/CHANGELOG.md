@@ -6,6 +6,113 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ## [Unreleased] — Fase 1: Core System, Dynamic Engine & Workflow
 
+### 2026-11-26
+
+#### Ditambah — Langkah 2.4: Frontend React Universal RBAC (shadcn/ui) & Integrasi Dynamic Sidebar
+
+**Verifikasi:** `php artisan test` → 104 passed, 665 assertions ✓ | `npm run build` → 2352 modules, 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `vp lint` (13 file, 111 rules) → 0 warnings, 0 errors ✓ | `pint --test` → passed ✓
+
+**Types, Hooks & Dynamic Sidebar**
+- `resources/js/types/rbac.ts`, `resources/js/types/auth.ts`, & `resources/js/types/index.ts` — definisi tipe TypeScript eksplisit untuk pohon menu dinamis (`MenuNode`), manajemen menu/sort, menu actions, paginated standalone permissions, role summary/detail, dan matriks role.
+- `resources/js/hooks/use-permission.ts` — hook `usePermission()` (`can()`, `canAny()`, `canAll()`) membaca `auth.permissions` dari Inertia shared props.
+- `resources/js/lib/rbac-icons.ts`, `resources/js/components/nav-main.tsx`, & `resources/js/components/app-sidebar.tsx` — pemetaan ikon Lucide serta sidebar dinamis dari `auth.menus` mendukung parent-child collapsible (auto-expand saat submenu aktif) dan grup divider.
+
+**Halaman Universal RBAC (`resources/js/pages/universal/rbac/`)**
+- `menu/index.tsx`, `menu/form.tsx`, & `menu/sort.tsx` — daftar hierarki menu (pencarian, filter status, toggle aktif, dialog konfirmasi hapus, tabel desktop + kartu mobile), form tambah/ubah menu dengan pratinjau ikon & prefix izin, serta halaman urutkan menu via drag-and-drop maupun tombol/keyboard (naik, turun, indent, outdent).
+- `permission/index.tsx` — 2 tab (*Menu Actions* dengan collapsible per menu + dialog tambah/ubah aksi berpratinjau langsung `{prefix}.{action}`, serta *Standalone Permissions* dengan pencarian, filter grup, paginasi, dan dialog CRUD).
+- `role/index.tsx` & `role/form.tsx` — daftar peran (`users_count`, `menus_count`, `permissions_count`, badge proteksi `superadmin_saas`) dan form matriks pohon menu dengan checkbox *tri-state* (`checked` / `indeterminate` / `unchecked`) untuk parent ↔ child ↔ semua aksi ↔ per-aksi serta grup standalone permissions.
+
+**Feature Test**
+- `tests/Feature/Rbac/UniversalRbacManagementTest.php` — menambah verifikasi eksistensi komponen halaman Inertia nyata untuk seluruh 6 halaman (`menu/index`, `menu/form`, `menu/sort`, `permission/index`, `role/index`, `role/form`).
+
+---
+
+#### Ditambah — Langkah 2.3: Backend Universal RBAC (FormRequest, Service, Thin Controller) & Shared Inertia Props
+
+**Verifikasi:** `php artisan test` → 104 passed, 633 assertions ✓ | `npm run build` → 2335 modules, 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `phpstan analyse` (file Langkah 2.3, level 7) → 0 errors ✓ | `pint --test` (file Langkah 2.3) → passed ✓
+
+**FormRequests (`app/Http/Requests/Universal/Rbac/`)**
+- `MenuRequest`, `MenuReorderRequest`, `MenuActionRequest`, `PermissionRequest`, & `RoleRequest` — validasi ketat input menu, urutan hierarki, aksi menu, standalone permission, serta peran & matriks pada koneksi DB aktif.
+
+**OOP Services (`app/Services/Rbac/`)**
+- `MenuManagementService` — CRUD menu, proteksi relasi induk-anak melingkar, sinkronisasi `permission_prefix` ke aksi/permission terikat, `toggleStatus()`, `reorder()` atomik dalam transaksi DB, serta invalidasi cache `MenuService` & `PermissionRegistrar`.
+- `MenuActionManagementService` — CRUD aksi menu terkelompok beserta sinkronisasi otomatis baris `rbac_permissions` (`{prefix}.{action}`) dan pembersihan cache Spatie.
+- `PermissionManagementService` — paginasi, filter pencarian/grup, dan CRUD standalone permissions (`doesntHave('menuAction')`) dengan penolakan perubahan izin terikat menu melalui endpoint standalone.
+- `RoleManagementService` — CRUD role, penyedia matriks pohon menu + grup standalone permissions, sinkronisasi `rbac_menu_roles`, `rbac_menu_actions`, dan `rbac_permissions`, proteksi `superadmin_saas`, serta invalidasi cache per role.
+
+**Thin Controllers, Routes & Shared Props**
+- `app/Http/Controllers/Universal/Rbac/MenuController.php`, `MenuActionController.php`, `PermissionController.php`, & `RoleController.php` — Thin Controller mendelegasikan seluruh logika ke service layer.
+- `routes/universal/rbac.php` — seluruh endpoint `/rbac/menus*`, `/rbac/menu-actions*`, `/rbac/permissions*`, dan `/rbac/roles*` dilindungi eksplisit oleh middleware Spatie (`permission:menus.*`, `permission:permissions.*`, `permission:roles.*`).
+- `app/Http/Middleware/HandleInertiaRequests.php` & `resources/js/types/auth.ts` — men-share `auth.permissions` dan `auth.menus` (dari `MenuService`) secara otomatis ke seluruh halaman React.
+
+**Feature Test**
+- `tests/Feature/Rbac/UniversalRbacManagementTest.php` — 4 test cases (30+ skenario assertions) meliputi redirect guest Central vs Tenant, proteksi 403 & isolasi izin antar koneksi, CRUD + toggle + reorder menu dengan invalidasi cache, sinkronisasi otomatis `rbac_menu_actions` ↔ `rbac_permissions`, CRUD standalone permissions, CRUD role + proteksi `superadmin_saas`, serta verifikasi `auth.permissions` & `auth.menus` di Central dan Tenant.
+
+---
+
+#### Ditambah — Langkah 2.2: Fondasi Spatie RBAC, Migrasi Central & Tenant (`rbac_*`), Model & Seeder
+
+**Verifikasi:** `php artisan test` → 100 passed, 518 assertions ✓ | `npm run build` → 2335 modules, 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `phpstan analyse` (file Langkah 2.2, level 7) → 0 errors ✓ | `pint --test` (file Langkah 2.2) → passed ✓
+
+**Package, Konfigurasi & Migrasi Identik (Central & Tenant)**
+- `composer.json` & `config/permission.php` — memasang `spatie/laravel-permission` v8.5.0 dengan konfigurasi tabel berprefix `rbac_*` (`rbac_roles`, `rbac_permissions`, `rbac_model_has_permissions`, `rbac_model_has_roles`, `rbac_role_has_permissions`) serta model kustom `App\Models\Role` & `App\Models\Permission`.
+- `database/migrations/2026_11_26_000001_create_rbac_tables.php`, `database/migrations/2026_11_26_000002_create_rbac_menus_tables.php`, `database/migrations/tenant/2026_11_26_000001_create_rbac_tables.php`, & `database/migrations/tenant/2026_11_26_000002_create_rbac_menus_tables.php` — skema identik Central DB & Tenant DB dengan primary key ULID pada `rbac_roles`, `rbac_permissions`, `rbac_menus`, `rbac_menu_actions`, kolom `group` nullable pada `rbac_permissions`, `rbac_menu_roles`, dan `model_id` bertipe `unsignedBigInteger` menyesuaikan `users.id`.
+
+**Model, Trait Tenant-Aware & Service**
+- `app/Models/Role.php`, `app/Models/Permission.php`, `app/Models/Menu.php`, & `app/Models/MenuAction.php` — model ULID tanpa `CentralConnection` agar otomatis mengikuti koneksi DB aktif; `Permission::scopeStandalone()` (`doesntHave('menuAction')`) dan `Role::assignedUsersCount()`.
+- `app/Concerns/HasTenantAwareRoles.php` & `app/Models/User.php` — membungkus `Spatie\Permission\Traits\HasRoles` dengan override `newRelatedInstance()` dan sinkronisasi konteks agar relasi `roles()` dan `permissions()` selalu membaca/menulis pada koneksi DB aktif meski `User` memakai `CentralConnection`.
+- `app/Services/Rbac/MenuService.php` — penyusun pohon menu aktif sesuai role dengan cache terisolasi `menus:{tenant_id|central}:{user_id}`, `invalidateForUser()`, `invalidateForRole()`, dan `invalidateAllInContext()`.
+- `app/Providers/TenancyServiceProvider.php`, `config/tenancy.php`, `app/Providers/AppServiceProvider.php`, & `bootstrap/app.php` — mengaktifkan `Jobs\SeedDatabase` dengan `TenantDatabaseSeeder`, mereset cache `PermissionRegistrar` dan relasi auth user saat perpindahan konteks tenancy, serta mengikat alias middleware `role`, `permission`, `role_or_permission` ke Spatie.
+
+**Seeder Idempoten & Feature Test**
+- `database/seeders/Concerns/SeedsCrudMenus.php`, `CentralRolesAndPermissionsSeeder.php`, `CentralMenuSeeder.php`, `TenantRolesAndPermissionsSeeder.php`, `TenantMenuSeeder.php`, `TenantDatabaseSeeder.php`, & `CentralDatabaseSeeder.php` — seeding non-destruktif (`updateOrCreate` & `syncWithoutDetaching`) dalam transaksi DB untuk Central (`superadmin_saas`) dan Tenant (5 role bawaan: `superadmin_saas`, `admin_tenant`, `verifier`, `member`, `kiosk`).
+- `tests/Feature/Rbac/UniversalSpatieRbacTest.php` — 6 test cases mencakup skema identik Central/Tenant + ULID, idempotency seeder, auto-seeding tenant baru, isolasi `HasTenantAwareRoles` lintas Central/Tenant A/Tenant B, caching & invalidasi `MenuService`, serta penegakan middleware `permission:*` Spatie. *(Kode RBAC pra-Spatie lama dibersihkan agar tidak bentrok dengan implementasi Langkah 2.3–2.4).*
+
+---
+
+#### Ditambah — Langkah 2.1: Arsitektur 3-Layer Routing Berbasis Middleware (Flat 1-Level Folder)
+
+**Verifikasi:** `php artisan test` → 114 passed, 529 assertions ✓ | `npm run build` → 2340 modules, 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `phpstan analyse` (file Langkah 2.1, level 7) → 0 errors ✓ | `pint --test` (file Langkah 2.1) → passed ✓
+
+**RouteLoader, Middleware & Konfigurasi Prioritas**
+- `app/Support/RouteLoader.php` — helper `RouteLoader::load($context)` untuk memuat file `*.php` langsung pada level pertama `routes/{context}/` (`File::files()`, tanpa rekursi subfolder).
+- `app/Http/Middleware/Universal/EnsureKnownDomain.php` — middleware universal yang memastikan host termasuk `tenancy.central_domains` atau tenant sudah terinisialisasi, selain itu mengembalikan `404`.
+- `app/Http/Middleware/InitializeTenancyBySubdomainIfApplicable.php` — menangkap `TenantCouldNotBeIdentifiedException | NotASubdomainException` agar penolakan domain tak dikenal ditangani konsisten oleh `EnsureKnownDomain` / `PreventAccessFromTenantDomains` sebagai `404`.
+- `bootstrap/app.php` — mengatur prioritas middleware (`InitializeTenancyBySubdomainIfApplicable` setelah `StartSession`; `EnsureKnownDomain` & `PreventAccessFromTenantDomains` sebelum `AuthenticatesRequests`), menyiapkan registrasi alias middleware Spatie (`role`, `permission`, `role_or_permission`), serta merender `TenantCouldNotBeIdentifiedException | NotASubdomainException` sebagai `404`.
+
+**Penataan Ulang 3-Layer Route (Flat 1-Level)**
+- `routes/web.php` & `routes/tenant.php` — memisahkan grup Central (`PreventAccessFromTenantDomains` → `RouteLoader::load('central')`), Universal (`EnsureKnownDomain` → `RouteLoader::load('universal')`), dan Tenant (`web`, `InitializeTenancyBySubdomain`, `PreventAccessFromCentralDomains` → `RouteLoader::load('tenant')`) tanpa `Route::domain()`.
+- `routes/central/home.php` & `routes/central/auth.php` — route khusus domain central (`/`, `/workspace*`, `/logout-all`, `/auth/sso/*`, `/auth/otp*`).
+- `routes/tenant/auth.php` — route khusus subdomain tenant (`/sso/login`, `/sso/callback`, `/sso/logout`, `/sso/switch`).
+- `routes/universal/dashboard.php`, `routes/universal/settings.php`, & `routes/universal/rbac.php` — route universal yang berjalan di Central maupun Tenant (`/dashboard`, `/settings/*`, `/settings/roles*`, `.well-known/passkey-endpoints`); `routes/settings.php` lama dihapus.
+
+**Feature Test**
+- `tests/Feature/Routing/ThreeLayerRoutingTest.php` & `tests/Feature/Rbac/RoleBuilderTest.php` — verifikasi isolasi Central, Tenant, dan Universal lintas seluruh `central_domains`, penolakan `404` untuk domain/subdomain tak dikenal sebelum redirect `auth`, tidak adanya binding `Route::domain()`, serta struktur flat 1-level di `RouteLoader`.
+
+---
+
+#### Ditambah — Langkah 1.4: Multi-Tenant Workspace Picker, SP-Initiated SSO (`state`) & Signed Single Logout (SLO)
+
+**Verifikasi:** `php artisan test` → 109 passed, 431 assertions ✓ | `npm run build` → 2340 modules, 0 errors ✓ | `tsc --noEmit` → 0 errors ✓ | `phpstan analyse` (file Langkah 1.4, level 7) → 0 errors ✓ | `pint --test` (file Langkah 1.4) → passed ✓
+
+**SP-Initiated SSO (`state`) & Signed SLO**
+- `bootstrap/app.php` — konfigurasi `$middleware->redirectGuestsTo(...)` agar guest di subdomain tenant otomatis diarahkan ke `tenant.sso.login` (bukan `/login` lokal).
+- `app/Http/Requests/Central/Auth/SsoAuthorizeRequest.php` & `app/Http/Requests/Auth/SsoCallbackRequest.php` — validasi `domain` + `state` (40 karakter) untuk SP-initiated authorize serta parameter `state` opsional pada `/sso/callback`.
+- `app/Services/Auth/SsoService.php` — menambah `initiateSpLogin()`, `authorizeSpInitiated()`, validasi `hash_equals` anti-CSRF `state` pada `validateAndLogin()`, mempertahankan `url.intended` untuk `/auth/sso/authorize` pada `resolvePostLoginResponse()`, `logoutTenantAndRedirectToCentralSlo()`, `createCentralSloUrl()`, serta perbaikan `resolveCentralRootDomain()` saat dipanggil dari subdomain tenant.
+- `app/Http/Controllers/Tenant/Auth/SsoClientController.php` & `routes/tenant.php` — endpoint `GET /sso/login` (`tenant.sso.login`), `POST /sso/switch` (`tenant.sso.switch`), dan `POST /sso/logout` (`tenant.sso.logout`) yang menghapus sesi lokal tenant lalu memicu `Inertia::location` ke signed URL Central SLO.
+- `app/Http/Controllers/Central/Auth/SsoAuthorizeController.php`, `app/Http/Controllers/Central/Auth/SsoLogoutController.php`, `app/Http/Controllers/Auth/SsoCallbackController.php`, & `app/Http/Responses/LogoutResponse.php` — endpoint Central `GET /auth/sso/authorize` (`auth`, `throttle:30,1`) dan `GET /auth/sso/logout` (`signed:relative`), validasi `state` pada callback, serta penyatuan jalur SLO melalui `SsoService::createCentralSloUrl()`.
+
+**Workspace Picker, Instansi Switcher & Shared Props**
+- `app/Http/Requests/Central/Auth/SwitchTenantRequest.php`, `app/Http/Controllers/Central/Auth/WorkspaceController.php`, & `app/Services/Auth/WorkspaceService.php` — pemindahan FormRequest dan Thin Controller ke namespace `Central\Auth` untuk pemilih instansi (`workspace.picker`), switch instansi (`workspace.switch`), dan `logout-all`.
+- `app/Models/Domain.php` & `app/Http/Middleware/HandleInertiaRequests.php` — deklarasi relasi generic `Domain::tenant()` untuk Larastan serta shared prop `tenancy` (`current` dan `tenants`) ke seluruh halaman React.
+- `resources/js/types/auth.ts` & `resources/js/types/global.d.ts` — tipe TypeScript `TenantSummary` dan `TenancyState` pada shared Inertia props.
+- `resources/js/components/workspace-switcher.tsx`, `resources/js/components/app-sidebar.tsx`, `resources/js/components/user-menu-content.tsx`, & `resources/js/pages/auth/tenant-picker.tsx` — komponen dropdown *Instansi Switcher* pada sidebar, pengarah logout subdomain ke `tenant.sso.logout`, serta penyempurnaan kartu pemilih instansi (inline error alert, empty state informatif, dan `tabular-nums`).
+
+**Feature Test**
+- `tests/Feature/Auth/WorkspacePickerTest.php`, `tests/Feature/Auth/SsoHandshakeTest.php`, & `tests/Feature/Rbac/RoleBuilderTest.php` — pengujian `redirectGuestsTo` ke `tenant.sso.login`, penerbitan & validasi `state` (`hash_equals`) untuk mencegah login CSRF, SP-initiated `url.intended`, switch instansi dari subdomain tenant, Signed SLO + penolakan URL unsigned/expired, serta shared Inertia props `tenancy`.
+
+---
+
 ### 2026-11-25
 
 #### Ditambah — Langkah 2.3: Custom Role Builder UI & 2-Tier Permission Engine
