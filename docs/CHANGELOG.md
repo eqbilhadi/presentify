@@ -8,6 +8,15 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-27
 
+#### Ditambah — Langkah 3.2: Dynamic White-Label CSS Theme Engine
+
+**Verifikasi:** `php artisan test` -> **114 passed (871 assertions)**; `npm run build` -> **2363 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `vp check` -> **0 warning/error**; `pint --test` & `phpstan analyse` -> **0 error**.
+
+- **FormRequest & OOP Service:** `app/Http/Requests/Tenant/UpdateThemeConfigRequest.php` dan `app/Services/Tenant/ThemeCustomizerService.php` untuk validasi & normalisasi palet warna Hex/HSL (`#RGB`, `#RRGGBB`, `hsl(...)`) serta token `--radius`, kalkulasi otomatis kontras foreground WCAG (`#ffffff` / `#09090b`), adaptasi warna untuk dark mode, daftar preset instansi, pembaruan/reset `theme_config` di `sys_tenants`, dan formatting variabel CSS shadcn/ui.
+- **Perbaikan VirtualColumn Cast (`app/Models/Tenant.php`):** Menghapus cast `'array'` ganda pada `theme_config` dan `terminology` karena `stancl/tenancy` `VirtualColumn` sudah menserialisasi atribut ke kolom JSON `data` secara native tanpa double JSON-encoding.
+- **Thin Controller, Routes & Seeder:** `app/Http/Controllers/Tenant/ThemeController.php`, route `/tenant/theme` (`tenant.theme.edit|update|reset`) di `routes/tenant/settings.php` dengan proteksi `permission:tenant_theme.view|update`, serta menu `Tema & Tampilan` di `database/seeders/TenantMenuSeeder.php`.
+- **Injeksi CSS Variabel & Frontend React:** Sharing `tenancy.current.theme` di `HandleInertiaRequests.php`, injeksi dinamis CSS variables pada `document.documentElement` (dengan `MutationObserver` untuk mode terang/gelap) di `resources/js/components/app-shell.tsx`, `<style id="tenant-theme-initial">` anti-FOUC di `resources/views/app.blade.php`, halaman editor + pratinjau langsung `resources/js/pages/tenant/theme/edit.tsx`, serta pengujian di `tests/Feature/Tenant/TenantThemeTest.php`.
+
 #### Ditambah — Langkah 3.1: Profil Instansi & Pengaturan Identitas (White-Label Branding Dasar)
 
 **Verifikasi:** `php artisan test` -> **111 passed (785 assertions)**; `npm run build` -> **2361 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `npm run check` (`vp check`) -> **92 file terformat, 0 warning/error**; `pint --test` & `phpstan analyse` -> **0 error**.

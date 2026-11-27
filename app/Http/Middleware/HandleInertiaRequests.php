@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Auth\WorkspaceService;
 use App\Services\Rbac\MenuService;
+use App\Services\Tenant\ThemeCustomizerService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -23,6 +24,7 @@ class HandleInertiaRequests extends Middleware
     public function __construct(
         private readonly WorkspaceService $workspaceService,
         private readonly MenuService $menuService,
+        private readonly ThemeCustomizerService $themeCustomizerService,
     ) {}
 
     /**
@@ -54,6 +56,7 @@ class HandleInertiaRequests extends Middleware
                 'slug' => $activeTenant->slug,
                 'logo_url' => $activeTenant->logoUrl(),
                 'favicon_url' => $activeTenant->faviconUrl(),
+                'theme' => $this->themeCustomizerService->resolveThemePayload($activeTenant),
             ]
             : null;
 

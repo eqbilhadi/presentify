@@ -59,8 +59,6 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     {
         return [
             'is_active' => 'boolean',
-            'theme_config' => 'array',
-            'terminology' => 'array',
         ];
     }
 

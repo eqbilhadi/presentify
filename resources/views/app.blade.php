@@ -31,8 +31,10 @@
         </style>
 
         @php
-            $tenantFaviconUrl = tenancy()->initialized && tenant() instanceof \App\Models\Tenant
-                ? tenant()->faviconUrl()
+            $activeTenant = tenancy()->initialized && tenant() instanceof \App\Models\Tenant ? tenant() : null;
+            $tenantFaviconUrl = $activeTenant?->faviconUrl();
+            $tenantThemePayload = $activeTenant
+                ? app(\App\Services\Tenant\ThemeCustomizerService::class)->resolveThemePayload($activeTenant)
                 : null;
         @endphp
 
@@ -42,6 +44,23 @@
             <link rel="icon" href="/favicon.ico" sizes="any">
             <link rel="icon" href="/favicon.svg" type="image/svg+xml">
             <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @endif
+
+        @if (! empty($tenantThemePayload['css_variables']))
+            <style id="tenant-theme-initial">
+                :root {
+                    @foreach ($tenantThemePayload['css_variables'] as $var => $val)
+                        {{ $var }}: {{ $val }};
+                    @endforeach
+                }
+                @if (! empty($tenantThemePayload['dark_css_variables']))
+                .dark {
+                    @foreach ($tenantThemePayload['dark_css_variables'] as $var => $val)
+                        {{ $var }}: {{ $val }};
+                    @endforeach
+                }
+                @endif
+            </style>
         @endif
 
         @fonts

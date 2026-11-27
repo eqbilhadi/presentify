@@ -1,4 +1,5 @@
 import type { MenuNode } from './rbac';
+import type { TenantThemePayload } from './tenant';
 
 export type User = {
     id: number;
@@ -18,6 +19,7 @@ export type TenantSummary = {
     slug: string;
     logo_url?: string | null;
     favicon_url?: string | null;
+    theme?: TenantThemePayload | null;
 };
 
 export type TenancyState = {

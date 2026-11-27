@@ -154,11 +154,12 @@ Fokus: Fleksibilitas identitas visual dan bahasa instansi.
     - Route, Seeder & Shared Props: `routes/tenant/settings.php` (`/tenant/profile`, `/tenant-assets/{path}`), `TenantMenuSeeder` (menu `Profil Instansi` + izin `tenant_profile.view|update`), dan integrasi `logo_url`/`favicon_url` pada `HandleInertiaRequests`, `WorkspaceSwitcher`, `AppShell`, dan `app.blade.php`.
     - Frontend React (shadcn/ui + Wayfinder): `resources/js/pages/tenant/profile/edit.tsx` & `resources/js/types/tenant.ts`.
 
-- [ ] **Langkah 3.2: Dynamic White-Label CSS Theme Engine**
+- [x] **Langkah 3.2: Dynamic White-Label CSS Theme Engine** ✅ 2026-11-27
     - FormRequest: `App\Http\Requests\Tenant\UpdateThemeConfigRequest`.
-    - OOP Service: `App\Services\Tenant\ThemeCustomizerService` (validasi palet warna hex/hsl, pembaruan JSON `theme_config` di `sys_tenants`, dan formatting variabel CSS shadcn/ui `--primary`, `--accent`, `--radius`).
-    - Thin Controller: `App\Http\Controllers\Tenant\ThemeController`.
-    - Frontend: Injeksi variabel CSS warna ke root document via `app-shell.tsx` / `AppLayout` React.
+    - OOP Service: `App\Services\Tenant\ThemeCustomizerService` (validasi palet warna hex/hsl, pembaruan JSON `theme_config` di `sys_tenants`, kalkulasi kontras foreground WCAG & adaptasi dark mode, serta formatting variabel CSS shadcn/ui `--primary`, `--primary-foreground`, `--accent`, `--accent-foreground`, `--sidebar-primary`, `--sidebar-accent`, `--ring`, `--radius`).
+    - Thin Controller: `App\Http\Controllers\Tenant\ThemeController` (`edit`, `update`, `reset`).
+    - Route, Seeder & Shared Props: `routes/tenant/settings.php` (`/tenant/theme` terlindungi `permission:tenant_theme.view|update`), `TenantMenuSeeder` (menu `Tema & Tampilan`), dan sharing `tenancy.current.theme` pada `HandleInertiaRequests`.
+    - Frontend: Injeksi variabel CSS warna ke `:root` / `.dark` via `resources/js/components/app-shell.tsx` & SSR anti-FOUC pada `resources/views/app.blade.php`, serta editor tema + pratinjau langsung di `resources/js/pages/tenant/theme/edit.tsx`.
 
 - [ ] **Langkah 3.3: Kamus Terminologi Dinamis (Terminology Engine)**
     - FormRequest: `App\Http\Requests\Tenant\UpdateTerminologyRequest`.

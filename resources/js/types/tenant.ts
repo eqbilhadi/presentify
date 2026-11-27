@@ -14,3 +14,39 @@ export type TenantProfile = {
 };
 
 export type BrandingAssetType = 'logo' | 'favicon';
+
+export type TenantThemeConfig = {
+    primary: string | null;
+    accent: string | null;
+    radius: string | null;
+};
+
+export type TenantThemePayload = {
+    config: TenantThemeConfig | null;
+    css_variables: Record<string, string>;
+    dark_css_variables: Record<string, string>;
+};
+
+export type TenantThemePreset = {
+    key: string;
+    label: string;
+    description: string;
+    primary: string;
+    accent: string;
+    radius: string;
+};
+
+export type TenantThemeRadiusOption = {
+    value: string;
+    label: string;
+};
+
+export type TenantThemeEditorData = TenantThemePayload & {
+    presets: TenantThemePreset[];
+    radius_options: TenantThemeRadiusOption[];
+    defaults: {
+        primary: string;
+        accent: string;
+        radius: string;
+    };
+};

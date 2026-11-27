@@ -120,6 +120,16 @@ class TenantMenuSeeder extends Seeder
 
         $this->seedMenuWithActions([
             'parent_id' => $settingsGroup->id,
+            'sort_num' => 7,
+            'icon' => 'Palette',
+            'label_name' => 'Tema & Tampilan',
+            'route_name' => 'tenant.theme.edit',
+            'url' => '/tenant/theme',
+            'permission_prefix' => 'tenant_theme',
+        ], ['view', 'update'], $admins);
+
+        $this->seedMenuWithActions([
+            'parent_id' => $settingsGroup->id,
             'sort_num' => 10,
             'icon' => 'BookOpen',
             'label_name' => 'Kebijakan Presensi',

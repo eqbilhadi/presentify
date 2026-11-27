@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Tenant\TenantProfileController;
+use App\Http\Controllers\Tenant\ThemeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/tenant-assets/{path}', [TenantProfileController::class, 'asset'])
@@ -26,4 +27,19 @@ Route::middleware(['auth', 'verified'])
             ->whereIn('type', ['logo', 'favicon'])
             ->middleware('permission:tenant_profile.update')
             ->name('branding.destroy');
+    });
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('tenant/theme')
+    ->name('tenant.theme.')
+    ->group(function (): void {
+        Route::get('/', [ThemeController::class, 'edit'])
+            ->middleware('permission:tenant_theme.view')
+            ->name('edit');
+        Route::put('/', [ThemeController::class, 'update'])
+            ->middleware('permission:tenant_theme.update')
+            ->name('update');
+        Route::delete('/', [ThemeController::class, 'reset'])
+            ->middleware('permission:tenant_theme.update')
+            ->name('reset');
     });
