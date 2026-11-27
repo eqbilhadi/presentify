@@ -52,14 +52,18 @@ export default function Login({ status, canResetPassword }: Props) {
                                         autoComplete="email"
                                         placeholder="email@example.com"
                                         defaultValue={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        onChange={(e) =>
+                                            setEmail(e.target.value)
+                                        }
                                     />
                                     <InputError message={errors.email} />
                                 </div>
 
                                 <div className="grid gap-2">
                                     <div className="flex items-center">
-                                        <Label htmlFor="password">Password</Label>
+                                        <Label htmlFor="password">
+                                            Password
+                                        </Label>
                                         {canResetPassword && (
                                             <TextLink
                                                 href={request()}
@@ -87,7 +91,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         name="remember"
                                         tabIndex={3}
                                     />
-                                    <Label htmlFor="remember">Remember me</Label>
+                                    <Label htmlFor="remember">
+                                        Remember me
+                                    </Label>
                                 </div>
 
                                 <Button
@@ -107,7 +113,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                     <span className="w-full border-t" />
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-background px-2 text-muted-foreground">atau</span>
+                                    <span className="bg-background px-2 text-muted-foreground">
+                                        atau
+                                    </span>
                                 </div>
                             </div>
 
@@ -132,18 +140,18 @@ export default function Login({ status, canResetPassword }: Props) {
             ) : (
                 <div className="flex flex-col gap-6">
                     <div className="text-sm text-muted-foreground">
-                        Masukkan alamat email terdaftar untuk menerima 6-digit kode verifikasi sekali pakai.
+                        Masukkan alamat email terdaftar untuk menerima 6-digit
+                        kode verifikasi sekali pakai.
                     </div>
 
-                    <Form
-                        {...send.form()}
-                        className="flex flex-col gap-6"
-                    >
+                    <Form {...send.form()} className="flex flex-col gap-6">
                         {({ processing, errors }) => (
                             <>
                                 <div className="grid gap-6">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="otp-email">Email address</Label>
+                                        <Label htmlFor="otp-email">
+                                            Email address
+                                        </Label>
                                         <Input
                                             id="otp-email"
                                             type="email"
@@ -153,7 +161,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                             autoComplete="email"
                                             placeholder="email@example.com"
                                             defaultValue={email}
-                                            onChange={(e) => setEmail(e.target.value)}
+                                            onChange={(e) =>
+                                                setEmail(e.target.value)
+                                            }
                                         />
                                         <InputError message={errors.email} />
                                     </div>
@@ -173,7 +183,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                         <span className="w-full border-t" />
                                     </div>
                                     <div className="relative flex justify-center text-xs uppercase">
-                                        <span className="bg-background px-2 text-muted-foreground">atau</span>
+                                        <span className="bg-background px-2 text-muted-foreground">
+                                            atau
+                                        </span>
                                     </div>
                                 </div>
 

@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                 'id' => $activeTenant->id,
                 'name' => $activeTenant->name,
                 'slug' => $activeTenant->slug,
+                'logo_url' => $activeTenant->logoUrl(),
+                'favicon_url' => $activeTenant->faviconUrl(),
             ]
             : null;
 

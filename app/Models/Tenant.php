@@ -10,18 +10,22 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 /**
- * @property string $id  UUID, primary key managed by stancl/tenancy
+ * @property string $id UUID, primary key managed by stancl/tenancy
  * @property string $name
  * @property string $slug
- * @property bool   $is_active
+ * @property bool $is_active
  * @property string|null $contact_email
  *
  * Virtual columns (stored in JSON `data`):
- * @property array<string, string>|null $theme_config  CSS variable values: primary, accent, radius
- * @property array<string, string>|null $terminology   Custom label map (e.g. "employee" => "Pegawai")
+ * @property array<string, string>|null $theme_config CSS variable values: primary, accent, radius
+ * @property array<string, string>|null $terminology Custom label map (e.g. "employee" => "Pegawai")
+ * @property string|null $phone
+ * @property string|null $address
+ * @property string|null $website
+ * @property string|null $tagline
  * @property string|null $logo_path
  * @property string|null $favicon_path
- * @property string|null $db_name  Tenant database name, resolved dynamically by HasDatabase
+ * @property string|null $db_name Tenant database name, resolved dynamically by HasDatabase
  */
 class Tenant extends BaseTenant implements TenantWithDatabase
 {
@@ -54,9 +58,9 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     protected function casts(): array
     {
         return [
-            'is_active'    => 'boolean',
+            'is_active' => 'boolean',
             'theme_config' => 'array',
-            'terminology'  => 'array',
+            'terminology' => 'array',
         ];
     }
 
@@ -84,5 +88,26 @@ class Tenant extends BaseTenant implements TenantWithDatabase
     public function tenantUsers(): HasMany
     {
         return $this->hasMany(TenantUser::class);
+    }
+
+    public function logoUrl(): ?string
+    {
+        return $this->resolveBrandingAssetUrl($this->logo_path);
+    }
+
+    public function faviconUrl(): ?string
+    {
+        return $this->resolveBrandingAssetUrl($this->favicon_path);
+    }
+
+    private function resolveBrandingAssetUrl(?string $path): ?string
+    {
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+
+        $normalizedPath = ltrim($path, '/');
+
+        return '/tenant-assets/'.$normalizedPath;
     }
 }

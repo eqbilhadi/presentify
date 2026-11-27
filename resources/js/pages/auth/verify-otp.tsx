@@ -7,7 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+    InputOTP,
+    InputOTPGroup,
+    InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { login } from '@/routes';
 import { send, store } from '@/routes/auth/otp';
 
@@ -26,16 +30,15 @@ export default function VerifyOtp({ email, status }: Props) {
             <Head title="Verifikasi OTP" />
 
             <div className="flex flex-col gap-6">
-                <Form
-                    {...store.form()}
-                    className="flex flex-col gap-6"
-                >
+                <Form {...store.form()} className="flex flex-col gap-6">
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2 text-center">
                                 <p className="text-sm text-muted-foreground">
                                     Kode 6-digit telah dikirim ke{' '}
-                                    <span className="font-medium text-foreground">{email || 'email Anda'}</span>
+                                    <span className="font-medium text-foreground">
+                                        {email || 'email Anda'}
+                                    </span>
                                 </p>
                             </div>
 
@@ -60,7 +63,10 @@ export default function VerifyOtp({ email, status }: Props) {
                                         </InputOTPGroup>
                                     </InputOTP>
                                 </div>
-                                <InputError message={errors.code} className="text-center" />
+                                <InputError
+                                    message={errors.code}
+                                    className="text-center"
+                                />
                             </div>
 
                             <Button
@@ -80,7 +86,11 @@ export default function VerifyOtp({ email, status }: Props) {
                         <Form {...send.form()} className="w-full">
                             {({ processing }) => (
                                 <>
-                                    <Input type="hidden" name="email" value={email} />
+                                    <Input
+                                        type="hidden"
+                                        name="email"
+                                        value={email}
+                                    />
                                     <div className="text-muted-foreground">
                                         Tidak menerima kode?{' '}
                                         <Button
@@ -89,7 +99,9 @@ export default function VerifyOtp({ email, status }: Props) {
                                             className="h-auto p-0 text-sm font-medium"
                                             disabled={processing}
                                         >
-                                            {processing ? 'Mengirim...' : 'Kirim ulang kode'}
+                                            {processing
+                                                ? 'Mengirim...'
+                                                : 'Kirim ulang kode'}
                                         </Button>
                                     </div>
                                 </>

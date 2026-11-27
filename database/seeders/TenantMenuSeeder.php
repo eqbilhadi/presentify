@@ -110,6 +110,16 @@ class TenantMenuSeeder extends Seeder
 
         $this->seedMenuWithActions([
             'parent_id' => $settingsGroup->id,
+            'sort_num' => 5,
+            'icon' => 'Building2',
+            'label_name' => 'Profil Instansi',
+            'route_name' => 'tenant.profile.edit',
+            'url' => '/tenant/profile',
+            'permission_prefix' => 'tenant_profile',
+        ], ['view', 'update'], $admins);
+
+        $this->seedMenuWithActions([
+            'parent_id' => $settingsGroup->id,
             'sort_num' => 10,
             'icon' => 'BookOpen',
             'label_name' => 'Kebijakan Presensi',
@@ -146,6 +156,16 @@ class TenantMenuSeeder extends Seeder
             'url' => '/rbac/roles',
             'permission_prefix' => 'roles',
         ], ['view', 'create', 'update', 'delete'], $admins);
+
+        $this->seedMenuWithActions([
+            'parent_id' => $settingsGroup->id,
+            'sort_num' => 50,
+            'icon' => 'UserCog',
+            'label_name' => 'Manajemen Pengguna',
+            'route_name' => 'tenant.rbac.users.index',
+            'url' => '/rbac/tenant-users',
+            'permission_prefix' => 'users',
+        ], ['view', 'create', 'update'], $admins);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

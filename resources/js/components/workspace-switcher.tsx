@@ -85,11 +85,21 @@ export function WorkspaceSwitcher() {
                 <SidebarMenuItem>
                     <SidebarMenuButton size="lg" asChild>
                         <Link href={dashboard()} prefetch>
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-                                <Building2
-                                    className="size-4"
-                                    aria-hidden="true"
-                                />
+                            <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                                {currentTenant.logo_url ? (
+                                    <img
+                                        src={currentTenant.logo_url}
+                                        alt={currentTenant.name}
+                                        width={32}
+                                        height={32}
+                                        className="size-full object-cover"
+                                    />
+                                ) : (
+                                    <Building2
+                                        className="size-4"
+                                        aria-hidden="true"
+                                    />
+                                )}
                             </div>
                             <div className="ml-1 grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-semibold">
@@ -117,9 +127,17 @@ export function WorkspaceSwitcher() {
                             aria-label="Pindah instansi"
                             data-test="workspace-switcher-trigger"
                         >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                            <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
                                 {switchingId ? (
                                     <Spinner className="size-4" />
+                                ) : currentTenant?.logo_url ? (
+                                    <img
+                                        src={currentTenant.logo_url}
+                                        alt={currentTenant.name}
+                                        width={32}
+                                        height={32}
+                                        className="size-full object-cover"
+                                    />
                                 ) : (
                                     <Building2
                                         className="size-4"

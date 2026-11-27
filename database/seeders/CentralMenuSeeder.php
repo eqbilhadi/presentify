@@ -81,6 +81,16 @@ class CentralMenuSeeder extends Seeder
                 'url' => '/rbac/roles',
                 'permission_prefix' => 'roles',
             ], ['view', 'create', 'update', 'delete'], $roles);
+
+            $this->seedMenuWithActions([
+                'parent_id' => $rbacParent->id,
+                'sort_num' => 40,
+                'icon' => 'Users',
+                'label_name' => 'Manajemen Pengguna',
+                'route_name' => 'central.rbac.users.index',
+                'url' => '/rbac/central-users',
+                'permission_prefix' => 'users',
+            ], ['view', 'create', 'update', 'delete'], $roles);
         });
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

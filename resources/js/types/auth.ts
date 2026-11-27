@@ -16,6 +16,8 @@ export type TenantSummary = {
     id: string;
     name: string;
     slug: string;
+    logo_url?: string | null;
+    favicon_url?: string | null;
 };
 
 export type TenancyState = {

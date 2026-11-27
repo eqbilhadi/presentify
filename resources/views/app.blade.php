@@ -30,9 +30,19 @@
             }
         </style>
 
-        <link rel="icon" href="/favicon.ico" sizes="any">
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @php
+            $tenantFaviconUrl = tenancy()->initialized && tenant() instanceof \App\Models\Tenant
+                ? tenant()->faviconUrl()
+                : null;
+        @endphp
+
+        @if ($tenantFaviconUrl)
+            <link rel="icon" href="{{ $tenantFaviconUrl }}" data-tenant-favicon="true">
+        @else
+            <link rel="icon" href="/favicon.ico" sizes="any">
+            <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+            <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        @endif
 
         @fonts
 

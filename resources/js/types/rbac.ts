@@ -148,3 +148,46 @@ export type RoleMatrixData = {
     menus: RoleMatrixMenu[];
     standalone_groups: RoleMatrixStandaloneGroup[];
 };
+
+export type RbacRoleOption = {
+    id: string;
+    name: string;
+};
+
+export type CentralUserListItem = {
+    id: number;
+    name: string;
+    email: string;
+    email_verified_at: string | null;
+    roles: RbacRoleOption[];
+    tenants_count: number;
+    created_at: string | null;
+};
+
+export type CentralUserDetail = {
+    id: number;
+    name: string;
+    email: string;
+    role_ids: string[];
+};
+
+export type TenantUserListItem = {
+    id: number;
+    name: string;
+    email: string;
+    nip: string | null;
+    position: string | null;
+    is_active: boolean;
+    last_accessed_at: string | null;
+    roles: RbacRoleOption[];
+};
+
+export type TenantUserDetail = {
+    id: number;
+    name: string;
+    email: string;
+    nip: string | null;
+    position: string | null;
+    is_active: boolean;
+    role_ids: string[];
+};
