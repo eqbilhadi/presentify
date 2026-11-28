@@ -6,13 +6,24 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ## [Unreleased] — Fase 1: Core System, Dynamic Engine & Workflow
 
+### 2026-11-28
+
+#### Diubah — Peningkatan Langkah 3.2: Theme Customizer Lengkap (Style, Base Color, Chart, Typography, Menu & Preset Code)
+
+**Verifikasi:** `php artisan test` -> **118 passed (1011 assertions)**; `npm run build` -> **2368 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `vp check --fix` -> **0 warning/error (87 file)**; `pint --test` & `phpstan analyse` -> **0 error**.
+
+- **Backend Service & Validasi (`app/Services/Tenant/ThemeCustomizerService.php`, `app/Http/Requests/Tenant/UpdateThemeConfigRequest.php`, `app/Http/Controllers/Tenant/ThemeController.php`):** Memperluas skema `theme_config` agar mendukung 5 _style_ (`vega`, `nova`, `maia`, `lyra`, `mira`), 5 _base color_ (`neutral`, `stone`, `zinc`, `slate`, `gray`) dengan token oklch light/dark lengkap, 10 palet warna tema + kustom Hex/HSL, 9 palet `--chart-1..5`, 10 pilihan Google Fonts untuk `heading_font` & `body_font`, pengaturan `menu_style` (`inset`, `sidebar`, `floating`, `inverted`) & `menu_accent` (`subtle`, `bold`), pembuatan stylesheet URL font dinamis (`buildFontStylesheetUrl()`), serta encode/decode kode preset (`--preset prs_...`).
+- **SSR & Global App Shell (`resources/views/app.blade.php`, `resources/css/app.css`, `resources/js/components/app-shell.tsx`, `resources/js/components/app-sidebar.tsx`):** Menambahkan sinkronisasi `<link id="tenant-theme-fonts">`, atribut `data-theme-style` / `data-menu-style` / `data-menu-accent`, aturan CSS heading `--font-heading`, dan pemilihan varian sidebar (`inset`, `sidebar`, `floating`) secara dinamis di `AppSidebar`.
+- **Frontend Theme Customizer & Live Preview (`resources/js/pages/tenant/theme/edit.tsx`, `resources/js/components/tenant/theme-preview-canvas.tsx`, `resources/js/lib/tenant-theme.ts`, `resources/js/types/tenant.ts`):** Merancang ulang halaman editor dengan panel kontrol ringkas di kiri (_Style_, _Base Color_, _Theme_ + kustom Hex/HSL, _Chart Color_, _Heading_, _Font_, _Icon Library: Lucide_, _Radius_, _Menu_, _Menu Accent_, tombol salin `--preset`, dialog _Open Preset_, _Shuffle_, dan dialog _Get Code_ CSS/JSON) serta kanvas pratinjau multi-kartu interaktif (_Terang_/_Gelap_) di kanan.
+- **Pengujian (`tests/Feature/Tenant/TenantThemeTest.php`):** Menambahkan cakupan uji untuk round-trip preset code, URL font dinamis, token `--chart-*` & `--sidebar-accent` bold/inverted, output Blade SSR, dan validasi seluruh opsi tema baru.
+
 ### 2026-11-27
 
 #### Ditambah — Langkah 3.3: Kamus Terminologi Dinamis (Terminology Engine)
 
 **Verifikasi:** `php artisan test` -> **117 passed (946 assertions)**; `npm run build` -> **2365 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `vp check` -> **0 warning/error**; `pint --test` & `phpstan analyse` -> **0 error**.
 
-- **FormRequest & OOP Service:** `app/Http/Requests/Tenant/UpdateTerminologyRequest.php` dan `app/Services/Tenant/TerminologyService.php` untuk pengelolaan kamus istilah JSON `terminology` pada `sys_tenants`, penggabungan non-destruktif terhadap 8 kunci istilah baku (`employee`, `unit`, `supervisor`, `delegation`, `attendance`, `leave`, `nip`, `office`), 4 template sektor instansi (*Instansi Pemerintah*, *Sekolah / Kampus*, *Klinik / Rumah Sakit*, *Perusahaan Swasta*), serta operasi `updateTerminology()` dan `resetTerminology()`.
+- **FormRequest & OOP Service:** `app/Http/Requests/Tenant/UpdateTerminologyRequest.php` dan `app/Services/Tenant/TerminologyService.php` untuk pengelolaan kamus istilah JSON `terminology` pada `sys_tenants`, penggabungan non-destruktif terhadap 8 kunci istilah baku (`employee`, `unit`, `supervisor`, `delegation`, `attendance`, `leave`, `nip`, `office`), 4 template sektor instansi (_Instansi Pemerintah_, _Sekolah / Kampus_, _Klinik / Rumah Sakit_, _Perusahaan Swasta_), serta operasi `updateTerminology()` dan `resetTerminology()`.
 - **Thin Controller, Routes & Seeder:** `app/Http/Controllers/Tenant/TerminologyController.php`, route `/tenant/terminology` (`tenant.terminology.edit|update|reset`) pada `routes/tenant/settings.php` dengan middleware eksplisit `permission:tenant_terminology.view|update`, serta menu `Kamus Terminologi` pada `database/seeders/TenantMenuSeeder.php`.
 - **Shared Props, React Hook & UI:** Sharing `tenancy.terminology` pada `HandleInertiaRequests.php`, custom hook `useTerminology(key, defaultText)` & `useTerminologyMap()` di `resources/js/hooks/use-terminology.ts`, tipe `resources/js/types/{tenant,auth}.ts`, ikon `Languages` di `resources/js/lib/rbac-icons.ts`, halaman editor + pratinjau kalimat antarmuka `resources/js/pages/tenant/terminology/edit.tsx`, serta pengujian fitur di `tests/Feature/Tenant/TenantTerminologyTest.php`.
 

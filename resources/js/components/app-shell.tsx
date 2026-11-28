@@ -4,16 +4,39 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import type { AppVariant } from '@/types';
 
 const MANAGED_THEME_VARIABLES = [
+    '--background',
+    '--foreground',
+    '--card',
+    '--card-foreground',
+    '--popover',
+    '--popover-foreground',
     '--primary',
     '--primary-foreground',
+    '--secondary',
+    '--secondary-foreground',
+    '--muted',
+    '--muted-foreground',
     '--accent',
     '--accent-foreground',
+    '--border',
+    '--input',
+    '--ring',
+    '--radius',
+    '--chart-1',
+    '--chart-2',
+    '--chart-3',
+    '--chart-4',
+    '--chart-5',
+    '--sidebar',
+    '--sidebar-foreground',
     '--sidebar-primary',
     '--sidebar-primary-foreground',
     '--sidebar-accent',
     '--sidebar-accent-foreground',
-    '--ring',
-    '--radius',
+    '--sidebar-border',
+    '--sidebar-ring',
+    '--font-sans',
+    '--font-heading',
 ] as const;
 
 type Props = {
@@ -52,6 +75,38 @@ export function AppShell({ children, variant = 'sidebar' }: Props) {
 
         const root = document.documentElement;
         document.getElementById('tenant-theme-initial')?.remove();
+
+        const fontUrl = tenantTheme?.font_stylesheet_url ?? null;
+        const existingFontLink = document.getElementById(
+            'tenant-theme-fonts',
+        ) as HTMLLinkElement | null;
+
+        if (fontUrl) {
+            if (existingFontLink) {
+                if (existingFontLink.href !== fontUrl) {
+                    existingFontLink.href = fontUrl;
+                }
+            } else {
+                const fontLink = document.createElement('link');
+                fontLink.id = 'tenant-theme-fonts';
+                fontLink.rel = 'stylesheet';
+                fontLink.href = fontUrl;
+                document.head.appendChild(fontLink);
+            }
+        } else {
+            existingFontLink?.remove();
+        }
+
+        const dataAttrs = tenantTheme?.data_attributes ?? null;
+        if (dataAttrs) {
+            root.setAttribute('data-theme-style', dataAttrs.style);
+            root.setAttribute('data-menu-style', dataAttrs.menu_style);
+            root.setAttribute('data-menu-accent', dataAttrs.menu_accent);
+        } else {
+            root.removeAttribute('data-theme-style');
+            root.removeAttribute('data-menu-style');
+            root.removeAttribute('data-menu-accent');
+        }
 
         const applyThemeVariables = () => {
             const isDark = root.classList.contains('dark');

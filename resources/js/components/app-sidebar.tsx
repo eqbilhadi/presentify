@@ -12,8 +12,17 @@ import { dashboard } from '@/routes';
 import type { MenuNode } from '@/types';
 
 export function AppSidebar() {
-    const { auth } = usePage().props;
+    const { auth, tenancy } = usePage().props;
     const dynamicMenus = auth?.menus ?? [];
+    const configuredMenuStyle = tenancy?.current?.theme?.config?.menu_style;
+
+    const sidebarVariant =
+        configuredMenuStyle === 'floating'
+            ? 'floating'
+            : configuredMenuStyle === 'sidebar' ||
+                configuredMenuStyle === 'inverted'
+              ? 'sidebar'
+              : 'inset';
 
     const menusToRender: MenuNode[] =
         dynamicMenus.length > 0
@@ -34,7 +43,7 @@ export function AppSidebar() {
               ];
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
+        <Sidebar collapsible="icon" variant={sidebarVariant}>
             <SidebarHeader>
                 <WorkspaceSwitcher />
             </SidebarHeader>

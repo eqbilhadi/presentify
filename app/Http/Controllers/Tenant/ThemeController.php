@@ -31,7 +31,19 @@ class ThemeController extends Controller
     {
         $tenant = $this->currentTenant();
 
-        /** @var array{primary: string, accent: string, radius: string} $payload */
+        /** @var array{
+         *     primary: string,
+         *     accent: string,
+         *     radius: string,
+         *     style?: string|null,
+         *     base_color?: string|null,
+         *     theme_color?: string|null,
+         *     chart_color?: string|null,
+         *     heading_font?: string|null,
+         *     body_font?: string|null,
+         *     menu_style?: string|null,
+         *     menu_accent?: string|null
+         * } $payload */
         $payload = $request->validated();
         $this->themeCustomizerService->updateTheme($tenant, $payload);
 

@@ -236,3 +236,111 @@ it('updates, shares, validates, and resets tenant theme config on sys_tenants', 
             ->where('tenancy.current.theme.css_variables', [])
         );
 });
+
+it('supports extended style, base color, chart color, fonts, menu style, and preset code round-trip', function () use (&$createdTenants) {
+    $service = app(ThemeCustomizerService::class);
+
+    $encoded = $service->encodePresetCode([
+        'style' => 'lyra',
+        'base_color' => 'stone',
+        'theme_color' => 'orange',
+        'primary' => '#ea580c',
+        'accent' => '#fff7ed',
+        'chart_color' => 'orange',
+        'heading_font' => 'Oxanium',
+        'body_font' => 'Outfit',
+        'radius' => '0rem',
+        'menu_style' => 'inverted',
+        'menu_accent' => 'bold',
+    ]);
+
+    expect($encoded)->toStartWith('prs_');
+
+    $decoded = $service->decodePresetCode("--preset {$encoded}");
+    expect($decoded)->toMatchArray([
+        'style' => 'lyra',
+        'base_color' => 'stone',
+        'theme_color' => 'orange',
+        'primary' => '#ea580c',
+        'accent' => '#fff7ed',
+        'chart_color' => 'orange',
+        'heading_font' => 'Oxanium',
+        'body_font' => 'Outfit',
+        'radius' => '0rem',
+        'menu_style' => 'inverted',
+        'menu_accent' => 'bold',
+    ])
+        ->and($service->decodePresetCode('invalid-code'))->toBeNull();
+
+    $fontUrl = $service->buildFontStylesheetUrl('Oxanium', 'Outfit');
+    expect($fontUrl)->toContain('fonts.googleapis.com/css2')
+        ->and($fontUrl)->toContain('Oxanium')
+        ->and($fontUrl)->toContain('Outfit');
+
+    $tenant = makeTenantThemeSubject($createdTenants, 'tfull');
+    $admin = attachTenantThemeUser($tenant, 'admin_tenant');
+
+    $this->actingAs($admin)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->put("http://{$tenant->slug}.presentify.test/tenant/theme", [
+            'style' => 'lyra',
+            'base_color' => 'stone',
+            'theme_color' => 'orange',
+            'primary' => '#ea580c',
+            'accent' => '#fff7ed',
+            'chart_color' => 'orange',
+            'heading_font' => 'Oxanium',
+            'body_font' => 'Outfit',
+            'radius' => '0rem',
+            'menu_style' => 'inverted',
+            'menu_accent' => 'bold',
+        ])
+        ->assertRedirect("http://{$tenant->slug}.presentify.test/tenant/theme");
+
+    $response = $this->actingAs($admin)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->withoutVite()
+        ->get("http://{$tenant->slug}.presentify.test/dashboard");
+
+    $response->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('tenancy.current.theme.config.style', 'lyra')
+            ->where('tenancy.current.theme.config.base_color', 'stone')
+            ->where('tenancy.current.theme.config.heading_font', 'Oxanium')
+            ->where('tenancy.current.theme.config.body_font', 'Outfit')
+            ->where('tenancy.current.theme.config.menu_style', 'inverted')
+            ->where('tenancy.current.theme.config.menu_accent', 'bold')
+            ->where('tenancy.current.theme.css_variables.--chart-1', '#f97316')
+            ->where('tenancy.current.theme.css_variables.--sidebar-accent', '#ea580c')
+            ->where('tenancy.current.theme.data_attributes.style', 'lyra')
+        );
+
+    expect($response->getContent())->toContain('data-theme-style="lyra"')
+        ->and($response->getContent())->toContain('id="tenant-theme-fonts"')
+        ->and($response->getContent())->toContain('Oxanium');
+
+    // Validation errors on invalid extended fields
+    $this->actingAs($admin)
+        ->withSession([ScopeSessions::$tenantIdKey => $tenant->id])
+        ->put("http://{$tenant->slug}.presentify.test/tenant/theme", [
+            'primary' => '#ea580c',
+            'accent' => '#fff7ed',
+            'radius' => '0rem',
+            'style' => 'unknown-style',
+            'base_color' => 'neon',
+            'chart_color' => 'not-valid',
+            'heading_font' => 'Comic Sans MS',
+            'body_font' => 'Papyrus',
+            'menu_style' => 'invalid-menu',
+            'menu_accent' => 'invalid-accent',
+        ])
+        ->assertSessionHasErrors([
+            'style',
+            'base_color',
+            'chart_color',
+            'heading_font',
+            'body_font',
+            'menu_style',
+            'menu_accent',
+        ]);
+});
