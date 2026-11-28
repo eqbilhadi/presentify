@@ -6,6 +6,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Auth\WorkspaceService;
 use App\Services\Rbac\MenuService;
+use App\Services\Tenant\TerminologyService;
 use App\Services\Tenant\ThemeCustomizerService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -25,6 +26,7 @@ class HandleInertiaRequests extends Middleware
         private readonly WorkspaceService $workspaceService,
         private readonly MenuService $menuService,
         private readonly ThemeCustomizerService $themeCustomizerService,
+        private readonly TerminologyService $terminologyService,
     ) {}
 
     /**
@@ -90,6 +92,7 @@ class HandleInertiaRequests extends Middleware
             'tenancy' => [
                 'current' => $currentTenant,
                 'tenants' => $availableTenants,
+                'terminology' => $this->terminologyService->resolveTerms($activeTenant instanceof Tenant ? $activeTenant : null),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

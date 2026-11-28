@@ -161,11 +161,12 @@ Fokus: Fleksibilitas identitas visual dan bahasa instansi.
     - Route, Seeder & Shared Props: `routes/tenant/settings.php` (`/tenant/theme` terlindungi `permission:tenant_theme.view|update`), `TenantMenuSeeder` (menu `Tema & Tampilan`), dan sharing `tenancy.current.theme` pada `HandleInertiaRequests`.
     - Frontend: Injeksi variabel CSS warna ke `:root` / `.dark` via `resources/js/components/app-shell.tsx` & SSR anti-FOUC pada `resources/views/app.blade.php`, serta editor tema + pratinjau langsung di `resources/js/pages/tenant/theme/edit.tsx`.
 
-- [ ] **Langkah 3.3: Kamus Terminologi Dinamis (Terminology Engine)**
+- [x] **Langkah 3.3: Kamus Terminologi Dinamis (Terminology Engine)** ✅ 2026-11-27
     - FormRequest: `App\Http\Requests\Tenant\UpdateTerminologyRequest`.
-    - OOP Service: `App\Services\Tenant\TerminologyService` (manajemen kamus istilah JSON `terminology` pada `sys_tenants`, sinkronisasi istilah default, dan penyedia kamus ke frontend).
-    - Thin Controller: `App\Http\Controllers\Tenant\TerminologyController`.
-    - Frontend: Custom hook React `useTerminology(key, defaultText)`.
+    - OOP Service: `App\Services\Tenant\TerminologyService` (manajemen kamus istilah JSON `terminology` pada `sys_tenants`, penggabungan otomatis dengan 8 istilah standar bawaan + template sektor, dan penyediaan kamus ke frontend).
+    - Thin Controller: `App\Http\Controllers\Tenant\TerminologyController` (`edit`, `update`, `reset`).
+    - Route, Seeder & Shared Props: `routes/tenant/settings.php` (`/tenant/terminology` terlindungi `permission:tenant_terminology.view|update`), `TenantMenuSeeder` (menu `Kamus Terminologi`), dan sharing `tenancy.terminology` pada `HandleInertiaRequests`.
+    - Frontend: Custom hook React `useTerminology(key, defaultText)` & `useTerminologyMap()` di `resources/js/hooks/use-terminology.ts`, serta editor kamus + pratinjau kalimat antarmuka di `resources/js/pages/tenant/terminology/edit.tsx`.
 
 ---
 

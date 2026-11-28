@@ -25,6 +25,7 @@ export type TenantSummary = {
 export type TenancyState = {
     current: TenantSummary | null;
     tenants: TenantSummary[];
+    terminology?: Record<string, string>;
 };
 
 export type Auth = {

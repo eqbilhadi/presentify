@@ -50,3 +50,27 @@ export type TenantThemeEditorData = TenantThemePayload & {
         radius: string;
     };
 };
+
+export type TerminologyDefinition = {
+    key: string;
+    label: string;
+    description: string;
+    default: string;
+    placeholder: string;
+    value: string;
+};
+
+export type TerminologyPreset = {
+    key: string;
+    label: string;
+    description: string;
+    terms: Record<string, string>;
+};
+
+export type TenantTerminologyEditorData = {
+    terms: Record<string, string>;
+    defaults: Record<string, string>;
+    definitions: TerminologyDefinition[];
+    presets: TerminologyPreset[];
+    is_customized: boolean;
+};

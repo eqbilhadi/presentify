@@ -130,6 +130,16 @@ class TenantMenuSeeder extends Seeder
 
         $this->seedMenuWithActions([
             'parent_id' => $settingsGroup->id,
+            'sort_num' => 8,
+            'icon' => 'Languages',
+            'label_name' => 'Kamus Terminologi',
+            'route_name' => 'tenant.terminology.edit',
+            'url' => '/tenant/terminology',
+            'permission_prefix' => 'tenant_terminology',
+        ], ['view', 'update'], $admins);
+
+        $this->seedMenuWithActions([
+            'parent_id' => $settingsGroup->id,
             'sort_num' => 10,
             'icon' => 'BookOpen',
             'label_name' => 'Kebijakan Presensi',

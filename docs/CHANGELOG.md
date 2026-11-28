@@ -8,6 +8,14 @@ Semua perubahan penting pada proyek Presentify dicatat di sini.
 
 ### 2026-11-27
 
+#### Ditambah — Langkah 3.3: Kamus Terminologi Dinamis (Terminology Engine)
+
+**Verifikasi:** `php artisan test` -> **117 passed (946 assertions)**; `npm run build` -> **2365 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `vp check` -> **0 warning/error**; `pint --test` & `phpstan analyse` -> **0 error**.
+
+- **FormRequest & OOP Service:** `app/Http/Requests/Tenant/UpdateTerminologyRequest.php` dan `app/Services/Tenant/TerminologyService.php` untuk pengelolaan kamus istilah JSON `terminology` pada `sys_tenants`, penggabungan non-destruktif terhadap 8 kunci istilah baku (`employee`, `unit`, `supervisor`, `delegation`, `attendance`, `leave`, `nip`, `office`), 4 template sektor instansi (*Instansi Pemerintah*, *Sekolah / Kampus*, *Klinik / Rumah Sakit*, *Perusahaan Swasta*), serta operasi `updateTerminology()` dan `resetTerminology()`.
+- **Thin Controller, Routes & Seeder:** `app/Http/Controllers/Tenant/TerminologyController.php`, route `/tenant/terminology` (`tenant.terminology.edit|update|reset`) pada `routes/tenant/settings.php` dengan middleware eksplisit `permission:tenant_terminology.view|update`, serta menu `Kamus Terminologi` pada `database/seeders/TenantMenuSeeder.php`.
+- **Shared Props, React Hook & UI:** Sharing `tenancy.terminology` pada `HandleInertiaRequests.php`, custom hook `useTerminology(key, defaultText)` & `useTerminologyMap()` di `resources/js/hooks/use-terminology.ts`, tipe `resources/js/types/{tenant,auth}.ts`, ikon `Languages` di `resources/js/lib/rbac-icons.ts`, halaman editor + pratinjau kalimat antarmuka `resources/js/pages/tenant/terminology/edit.tsx`, serta pengujian fitur di `tests/Feature/Tenant/TenantTerminologyTest.php`.
+
 #### Ditambah — Langkah 3.2: Dynamic White-Label CSS Theme Engine
 
 **Verifikasi:** `php artisan test` -> **114 passed (871 assertions)**; `npm run build` -> **2363 modul (0 error)**; `npm run types:check` (`tsc --noEmit`) -> **0 error**; `vp check` -> **0 warning/error**; `pint --test` & `phpstan analyse` -> **0 error**.

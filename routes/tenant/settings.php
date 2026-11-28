@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Tenant\TenantProfileController;
+use App\Http\Controllers\Tenant\TerminologyController;
 use App\Http\Controllers\Tenant\ThemeController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,5 +42,20 @@ Route::middleware(['auth', 'verified'])
             ->name('update');
         Route::delete('/', [ThemeController::class, 'reset'])
             ->middleware('permission:tenant_theme.update')
+            ->name('reset');
+    });
+
+Route::middleware(['auth', 'verified'])
+    ->prefix('tenant/terminology')
+    ->name('tenant.terminology.')
+    ->group(function (): void {
+        Route::get('/', [TerminologyController::class, 'edit'])
+            ->middleware('permission:tenant_terminology.view')
+            ->name('edit');
+        Route::put('/', [TerminologyController::class, 'update'])
+            ->middleware('permission:tenant_terminology.update')
+            ->name('update');
+        Route::delete('/', [TerminologyController::class, 'reset'])
+            ->middleware('permission:tenant_terminology.update')
             ->name('reset');
     });
